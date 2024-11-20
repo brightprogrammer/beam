@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BEAM</title>
+    <!-- Bulma CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css"
+    />
+  </head>
+  <body class="light-mode">
+    <section class="hero">
+      <div class="hero-body">
+        <div class="container is-flex is-justify-content-flex-end">
+          <button id="theme-toggle" class="button">Dark</button>
+        </div>
+        <div class="container">
+          <h1 class="title">Siddharth Mishra</h1>
+          <h2 class="subtitle">Socially tagless</h2>
+        </div>
+      </div>
+    </section>
+
+    <div class="container mt-5 content">
+      <!-- Theme Toggle Button -->
+      <center>
+        <br />
+
+        <p>
+          This website is in development mode. I'm writing a custom web server
+          in C to support dynamic server-side-rendering for my blog. My tech
+          stack is Html + CSS + JS + C. Right now I'm using BULMA CSS to style
+          this page, but I wish to learn something more flexible and powerful
+          like Tailwind CSS. I don't have good exposure to web development, and
+          I'm building this website and server together iteratively, so things
+          might look sad and bad.
+        </p>
+
+        <p>
+          Since the webserver is written in C, it's possibly vulnerable to some
+          exploitation techniques. While I'm very strict with my error checking,
+          I can never be sure there exists any vulnerabilities or not. Wanna
+          try? go on! Just don't do anything that will hurt me to get back this
+          website up. If you find something cool, ping me at
+          admin[at]brightprogrammer[dot]in and if I find it interesting, I'll
+          share your findings on my blog post and attribute you :-)
+        </p>
+
+        <p>
+          <h2>Hall Of Fame</h2>
+          <ul>
+          <li> Invalid http request, beam at the moment only processes http/1.1, but I got a non http/1.1 request and that crashed the website</li>
+          <li> A stack-buffer-overflow while using memchr() </li>
+          <li> A stack-buffer-overflow in the request storage buffer. Buffer size was 1024 and the null-termination got overwritten as well! Skill issues ig </li>
+          </ul>
+        </p>
+      </center>
+    </div>
+
+    <footer class="footer has-background-black is-full-width">
+      <div class="content has-text-centered has-text-white">
+        Copyright &copy 2024 Siddharth Mishra. All Rights Reserved.
+        <br />
+        beam 0.1 (17th Nov 2024)
+      </div>
+    </footer>
+
+    <!-- Script for Theme Toggle -->
+    <script>
+      const themeToggleButton = document.getElementById("theme-toggle");
+      const body = document.body;
+
+      themeToggleButton.addEventListener("click", () => {
+        body.classList.toggle("dark-mode");
+        body.classList.toggle("light-mode");
+
+        if (body.classList.contains("dark-mode")) {
+          themeToggleButton.textContent = "Light";
+        } else {
+          themeToggleButton.textContent = "Dark";
+        }
+      });
+    </script>
+  </body>
+</html>
