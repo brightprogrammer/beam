@@ -339,7 +339,7 @@ const char *
             return NULL;
         }
 
-        if(!VecPush(headers, &header)) {
+        if(!VecPushBack(headers, &header)) {
             LOG_ERROR("failed to insert header into vector.");
         }
     }
