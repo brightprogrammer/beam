@@ -10,46 +10,7 @@
 // beam
 #include <beam/http.h>
 #include <beam/log.h>
-
-// stat
-#include <sys/stat.h>
-
-///
-/// Get size of file without opening it.
-///
-/// filename[in] : Name/path of file.
-///
-/// SUCCESS : Non-negative value representing size of file in bytes.
-/// FAILURE : -1
-///
-static int64_t GetFileSize(const char *filename);
-
-///
-/// Read complete contents of file at once.
-///
-/// Pointer returned is malloc'd and hence must be freed after use.
-/// The returned pointer can also be reused by providing pointer to it
-/// in `data` parameter.
-///
-/// `realloc` is called on `*data` in order to expand it's size.
-/// If `*capacity` exceeds the size of file to be loaded, then no reallocation
-/// is performed. This means the provided buffer will automatically be expanded
-/// if required.
-///
-/// The returned buffer is null-terminated just-in-case.
-///
-/// filename[in]     : Name/path of file to be read.
-/// data[in,out]     : Memory buffer where loaded file will be stored.
-/// file_size[out]   : Complete size of file in bytes will be stored here.
-/// capacity[in,out] : Hints towards current capacity of `data` buffer.
-///                    New capacity of `data` buffer is automatically stored here if
-///                    realloc is performed.
-///
-/// SUCCESS : Returns a malloc'd array with read file contents.
-/// FAILURE : NULL
-///
-static void *
-    ReadCompleteFile(const char *filename, void **data, size_t *file_size, size_t *capacity);
+#include <beam/file.h>
 
 const char *HttpRequestMethodParse(
     HttpRequestMethod *method,
@@ -631,28 +592,73 @@ const char *HttpContentTypeToString(HttpContentType type) {
 }
 
 
-HttpResponse *HttpResponseInitFromFile(
-    HttpResponse    *response,
-    HttpResponseCode status_code,
-    HttpContentType  content_type,
-    const char      *filename
-) {
-    if(!response || !filename) {
+///
+/// Init response from html
+///
+/// response[in,out] : Http response to be sent out.
+/// status[in]       : Http response status code.
+/// html[in]         : Html data to be sent out.
+///
+/// SUCCESS : `response`
+/// FAILURE : NULL
+///
+HttpResponse *HttpResponseInitForHtml(HttpResponse *response, HttpResponseCode status, Html *html) {
+    if(!response || !html) {
         LOG_ERROR("invalid arguments.");
         return NULL;
     }
 
-    response->status_code  = status_code;
+    response->status_code  = status;
+    response->content_type = HTTP_CONTENT_TYPE_TEXT_HTML;
+
+    // clear contents
+    StringClear(&response->body);
+
+    String *iter;
+    size_t  i;
+    ListForeachPtr(html, iter, i) {
+        StringMerge(&response->body, iter);
+    }
+
+    return response;
+}
+
+
+///
+/// Init this response for file at given path.
+///
+/// response[in,out] : Response to be initialized.
+/// status[in]       : Http response code.
+/// content_type[in] : Content type stored in file.
+/// filepath[in]     ; Path at which file is present.
+///
+/// SUCCESS : `response`
+/// FAILURE : NULL
+///
+HttpResponse *HttpResponseInitForFile(
+    HttpResponse    *response,
+    HttpResponseCode status,
+    HttpContentType  content_type,
+    const char      *filepath
+) {
+    if(!response || !filepath) {
+        LOG_ERROR("invalid arguments.");
+        return NULL;
+    }
+
+    response->status_code  = status;
     response->content_type = content_type;
 
-    const char *html =
-        ReadCompleteFile(filename, &response->body, &response->body_size, &response->body_capacity);
+    const char *html = ReadCompleteFile(
+        filepath,
+        (void **)&response->body.data,
+        &response->body.length,
+        &response->body.capacity
+    );
     if(!html) {
         LOG_ERROR("failed to read html file contents.");
         return NULL;
     }
-
-    response->body = (void *)html;
 
     return response;
 }
@@ -689,14 +695,14 @@ HttpResponse *HttpResponseSend(HttpResponse *response, int connfd) {
         "\r\n",
         response_code,
         content_type,
-        response->body_size
+        response->body.length
     );
     if(0 >= http_response_size) {
         LOG_ERROR("snprintf() failed : %s.", strerror(errno));
         return NULL;
     }
 
-    size_t total_send_size = http_response_size + response->body_size;
+    size_t total_send_size = http_response_size + response->body.length;
     char  *send_data       = malloc(total_send_size + 1);
 
     snprintf(
@@ -709,10 +715,10 @@ HttpResponse *HttpResponseSend(HttpResponse *response, int connfd) {
         "\r\n",
         response_code,
         content_type,
-        response->body_size
+        response->body.length
     );
 
-    memcpy(send_data + http_response_size, response->body, response->body_size);
+    memcpy(send_data + http_response_size, response->body.data, response->body.length);
 
     send(connfd, send_data, total_send_size, 0);
 
@@ -728,74 +734,8 @@ void HttpResponseReset(HttpResponse *response) {
         return;
     }
 
-    if(response->body) {
-        free(response->body);
-    }
-
+    StringDeinit(&response->body);
     HttpHeadersFreeAll(&response->headers);
 
     memset(response, 0, sizeof(HttpResponse));
-}
-
-
-static int64_t GetFileSize(const char *filename) {
-    if(!filename) {
-        LOG_ERROR("invalid arguments.");
-        return -1;
-    }
-
-    struct stat file_stat;
-    if(0 == stat(filename, &file_stat)) {
-        return file_stat.st_size;
-    } else {
-        LOG_ERROR("failed to get file size : %s.", strerror(errno));
-        return -1;
-    }
-}
-
-
-static void *
-    ReadCompleteFile(const char *filename, void **data, size_t *file_size, size_t *capacity) {
-    if(!filename || !data || !file_size || !capacity) {
-        LOG_ERROR("invalid arguments.");
-        return NULL;
-    }
-
-    // get actual size of file
-    int64_t size = GetFileSize(filename);
-    if(-1 == size) {
-        LOG_ERROR("failed to get file size");
-        return NULL;
-    }
-
-    // allocate memory to hold the file contents if required
-    void *buffer = *data;
-    if(*capacity < (size_t)size) {
-        buffer = realloc(buffer, size + 1);
-        if(!buffer) {
-            LOG_ERROR("malloc() failed : %s.", strerror(errno));
-            return NULL;
-        }
-
-        *capacity = size + 1;
-    }
-
-    // Open the file in binary mode
-    FILE *file = fopen(filename, "rb");
-    if(!file) {
-        LOG_ERROR("fopen() failed : %s.", strerror(errno));
-        free(buffer);
-        return NULL;
-    }
-
-    // Read the entire file into the buffer
-    fread(buffer, 1, size, file);
-
-    // Close the file and return the buffer
-    fclose(file);
-
-    ((char *)buffer)[size] = 0; // null-termination for just in case.
-    *data                  = buffer;
-    *file_size             = size;
-    return buffer;
 }

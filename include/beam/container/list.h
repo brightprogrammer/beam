@@ -103,7 +103,7 @@ typedef struct {
 ///
 /// v : Pointer to list to be deinited
 ///
-#define ListDeinit(l) deinit_list(GENERIC_LIST(l))
+#define ListDeinit(l) deinit_list(GENERIC_LIST(l), sizeof(LIST_DATA_TYPE(l)))
 
 ///
 /// Insert item into list of it's type.
@@ -117,7 +117,7 @@ typedef struct {
 /// FAILURE : Returns `NULL` otherwise.
 ///
 #define ListInsert(l, val, idx)                                                                    \
-    ((__typeof__(l))(insert_into_list(GENERIC_LIST(l), val, sizeof(LIST_DATA_TYPE(l)), idx)))
+    ((__typeof__(l))(insert_into_list(GENERIC_LIST(l), (val), sizeof(LIST_DATA_TYPE(l)), (idx))))
 
 ///
 /// Remove item from list at given index and store in given pointer.
@@ -131,7 +131,7 @@ typedef struct {
 /// SUCCESS : Returns `v` on success.
 /// FAILURE : Returns NULL otherwise.
 ///
-#define ListRemove(l, val, idx) ((__typeof__(l))remove_range_list(GENERIC_LIST(l), val, sizeof(LIST_DATA_TYPE(l)), (l)->length - 1, 1)
+#define ListRemove(l, val, idx) ((__typeof__(l))remove_range_list(GENERIC_LIST(l), (val), sizeof(LIST_DATA_TYPE(l)), ((l)->length - 1), 1)
 
 ///
 /// Insert item at the very beginning of list.
@@ -142,7 +142,7 @@ typedef struct {
 /// SUCCESS : Returns `v` the list itself on success.
 /// FAILURE : Returns `NULL` otherwise.
 ///
-#define ListPushFront(l, val) ListInsert(l, val, 0);
+#define ListPushFront(l, val) ListInsert((l), (val), 0);
 
 ///
 /// Remove item from the very beginning of list.
@@ -153,7 +153,7 @@ typedef struct {
 /// SUCCESS : Returns `v` the list itself on success.
 /// FAILURE : Returns `NULL` otherwise.
 ///
-#define ListPopFront(l, val) ListRemove(l, val, 0);
+#define ListPopFront(l, val) ListRemove((l), (val), 0);
 
 ///
 /// Push item at the back of list.
@@ -164,7 +164,7 @@ typedef struct {
 /// SUCCESS : Returns `v` the list itself on success.
 /// FAILURE : Returns `NULL` otherwise.
 ///
-#define ListPushBack(l, val) ListInsert(l, val, (l) ? (l)->length : -1)
+#define ListPushBack(l, val) ListInsert((l), (val), ((l) ? (l)->length : -1))
 
 ///
 /// Pop item from list back.
@@ -177,7 +177,7 @@ typedef struct {
 /// SUCCESS : Returns `v` on success
 /// FAILURE : Returns NULL otherwise.
 ///
-#define ListPopBack(l, val) ListRemove(l, val, (l) ? (l)->length - 1, -1);
+#define ListPopBack(l, val) ListRemove((l), (val), ((l) ? (l)->length - 1 : -1), -1);
 
 ///
 /// Remove data from list in given range [start, start + count)
@@ -192,22 +192,23 @@ typedef struct {
 /// SUCCESS : Returns `v` on success.
 /// FAILURE : Returns NULL otherwise.
 ///
-#define ListRemoveRange(l, rd, start, count) ((__typeof__(l))remove_range_list(GENERIC_LIST(l), rd, sizeof(*v->data), start, count)
+#define ListRemoveRange(l, rd, start, count)                                                       \
+    ((__typeof__(l))remove_range_list(GENERIC_LIST(l), (rd), sizeof(*(v)->data), (start), (count)))
 
 ///
 /// Delete last item from list
 ///
-#define ListDeleteLast(l) ListPop(l, NULL)
+#define ListDeleteLast(l) ListPop((l), NULL)
 
 ///
 /// Delete item at given index
 ///
-#define ListDelete(l, idx) ListRemove(l, NULL, idx)
+#define ListDelete(l, idx) ListRemove((l), NULL, (idx))
 
 ///
 /// Delete items in given range [start, start + count)
 ///
-#define ListDeleteRange(l, start, count) ListRemoveRange(l, NULL, start, count)
+#define ListDeleteRange(l, start, count) ListRemoveRange((l), NULL, (start), (count))
 
 ///
 /// Sort given list with given comparator using quicksort algorithm.
@@ -218,7 +219,8 @@ typedef struct {
 /// SUCCESS : Returns `v` on success.
 /// FAILURE : Returns NULL otherwise.
 ///
-#define ListSort(l, compare) ((__typeof__(l))qsort_list(GENERIC_LIST(l), sizeof(LIST_DATA_TYPE(l)), compare)
+#define ListSort(l, compare)                                                                       \
+    ((__typeof__(l))qsort_list(GENERIC_LIST(l), sizeof(LIST_DATA_TYPE(l)), (compare)))
 
 ///
 /// Swap items at given indices.
@@ -231,7 +233,7 @@ typedef struct {
 /// FAILURE : NULL
 ///
 #define ListSwapItems(l, idx1, idx2)                                                               \
-    ((__typeof__(l))swap_list(GENERIC_LIST(l), sizeof(LIST_DATA_TYPE(l)), idx1, idx2))
+    ((__typeof__(l))swap_list(GENERIC_LIST(l), sizeof(LIST_DATA_TYPE(l)), (idx1), (idx2)))
 
 ///
 /// Set list length to 0.
@@ -247,7 +249,7 @@ typedef struct {
 /// Item at given index in list
 ///
 #define ListAt(l, idx)                                                                             \
-    *((LIST_DATA_TYPE(l) *)item_ptr_at_list(GENERIC_LIST(l), sizeof(LIST_DATA_TYPE(l)), idx))
+    *((LIST_DATA_TYPE(l) *)item_ptr_at_list(GENERIC_LIST(l), sizeof(LIST_DATA_TYPE(l)), (idx)))
 
 ///
 /// Value at first node in list
@@ -257,13 +259,13 @@ typedef struct {
 ///
 /// Value at last node in list
 ///
-#define ListLast(l) ListAt(l, (l) ? (l)->length : -1)
+#define ListLast(l) ListAt(l, ((l) ? (l)->length : -1))
 
 ///
 /// Node at given index in list
 ///
 #define ListNodeAt(l, idx)                                                                         \
-    ((LIST_NODE_TYPE(l) *)(node_at_list(GENERIC_LIST(l), sizeof(LIST_DATA_TYPE(l)), idx)))
+    ((LIST_NODE_TYPE(l) *)(node_at_list(GENERIC_LIST(l), sizeof(LIST_DATA_TYPE(l)), (idx))))
 
 ///
 /// Push a complete array into this list.
@@ -276,7 +278,7 @@ typedef struct {
 /// FAILURE : NULL
 ///
 #define ListPushArr(l, arr, count)                                                                 \
-    ((__typeof__(l))push_arr_list(GENERIC_LIST(l), sizeof(LIST_DATA_TYPE(l)), arr, count))
+    ((__typeof__(l))push_arr_list(GENERIC_LIST(l), sizeof(LIST_DATA_TYPE(l)), (arr), (count)))
 
 ///
 /// Merge two lists and store the result in first list.
@@ -302,28 +304,28 @@ typedef struct {
 #define ListForeach(l, var, iter)                                                                  \
     (iter) = 0;                                                                                    \
     if((l) && (l)->length > 0)                                                                     \
-        for(GenericListNode *__node = GENERIC_LIST_NODE(v->head);                                  \
+        for(GenericListNode *__node = GENERIC_LIST_NODE((l)->head);                                \
             __node != NULL && (((var) = ((LIST_NODE_TYPE(l) *)__node)->data), 1);                  \
             ++(iter), __node = __node->next)
 
 #define ListForeachReverse(l, var, iter)                                                           \
     (iter) = 0;                                                                                    \
     if((l) && (l)->length > 0)                                                                     \
-        for(GenericListNode *__node = GENERIC_LIST_NODE(v->tail);                                  \
+        for(GenericListNode *__node = GENERIC_LIST_NODE((l)->tail);                                \
             __node != NULL && (((var) = ((LIST_NODE_TYPE(l) *)__node)->data), 1);                  \
             ++(iter), __node = __node->prev)
 
 #define ListForeachPtr(l, var, iter)                                                               \
     (iter) = 0;                                                                                    \
     if((l) && (l)->length > 0)                                                                     \
-        for(GenericListNode *__node = GENERIC_LIST_NODE(v->head);                                  \
+        for(GenericListNode *__node = GENERIC_LIST_NODE((l)->head);                                \
             __node != NULL && (((var) = &((LIST_NODE_TYPE(l) *)__node)->data), 1);                 \
             ++(iter), __node = __node->next)
 
 #define ListForeachPtrReverse(l, var, iter)                                                        \
     (iter) = 0;                                                                                    \
     if((l) && (l)->length > 0)                                                                     \
-        for(GenericListNode *__node = GENERIC_LIST_NODE(v->tail);                                  \
+        for(GenericListNode *__node = GENERIC_LIST_NODE((l)->tail);                                \
             __node != NULL && (((var) = &((LIST_NODE_TYPE(l) *)__node)->data), 1);                 \
             ++(iter), __node = __node->prev)
 

@@ -110,7 +110,7 @@ typedef struct {
 /// FAILURE : Returns `NULL` otherwise.
 ///
 #define VecInsert(v, val, idx)                                                                     \
-    ((__typeof__(v))(insert_into_vec(GENERIC_VEC(v), val, sizeof((v)->data[0]), idx)))
+    ((__typeof__(v))(insert_into_vec(GENERIC_VEC(v), (val), sizeof((v)->data[0]), (idx))))
 
 ///
 /// Quickly insert item into vector. Ordering of elements is not guaranteed
@@ -130,7 +130,7 @@ typedef struct {
 /// FAILURE : Returns `NULL` otherwise.
 ///
 #define VecInsertFast(v, val, idx)                                                                 \
-    ((__typeof__(v))(insert_fast_into_vec(GENERIC_VEC(v), val, sizeof((v)->data[0]), idx)))
+    ((__typeof__(v))(insert_fast_into_vec(GENERIC_VEC(v), (val), sizeof((v)->data[0]), (idx))))
 
 ///
 /// Remove item from vector at given index and store in given pointer.
@@ -145,7 +145,7 @@ typedef struct {
 /// FAILURE : Returns NULL otherwise.
 ///
 #define VecRemove(v, val, idx)                                                                     \
-    ((__typeof__(v))remove_range_vec(GENERIC_VEC(v), val, sizeof((v)->data[0]), idx, 1))
+    ((__typeof__(v))remove_range_vec(GENERIC_VEC(v), (val), sizeof((v)->data[0]), (idx), 1))
 
 ///
 /// Remove item from vector at given index and store in given pointer.
@@ -161,7 +161,7 @@ typedef struct {
 /// FAILURE : Returns NULL otherwise.
 ///
 #define VecRemoveFast(v, val, idx)                                                                 \
-    ((__typeof__(v))fast_remove_range_vec(GENERIC_VEC(v), val, sizeof((v)->data[0]), idx, 1))
+    ((__typeof__(v))fast_remove_range_vec(GENERIC_VEC(v), (val), sizeof((v)->data[0]), (idx), 1))
 
 ///
 /// Remove data from vector in given range [start, start + count)
@@ -177,7 +177,7 @@ typedef struct {
 /// FAILURE : Returns NULL otherwise.
 ///
 #define VecRemoveRange(v, rd, start, count)                                                        \
-    ((__typeof__(v))remove_range_vec(GENERIC_VEC(v), rd, sizeof(*v->data), start, count))
+    ((__typeof__(v))remove_range_vec(GENERIC_VEC(v), (rd), sizeof(*(v)->data), (start), (count)))
 
 
 ///
@@ -195,7 +195,8 @@ typedef struct {
 /// FAILURE : Returns NULL otherwise.
 ///
 #define VecRemoveRangeFast(v, rd, start, count)                                                    \
-    ((__typeof__(v))fast_remove_range_vec(GENERIC_VEC(v), rd, sizeof(*v->data), start, count))
+    ((__typeof__(v)                                                                                \
+    )fast_remove_range_vec(GENERIC_VEC(v), (rd), sizeof(*(v)->data), (start), (count)))
 
 ///
 /// Push item into vector back.
@@ -206,7 +207,7 @@ typedef struct {
 /// SUCCESS : Returns `v` the vector itself on success.
 /// FAILURE : Returns `NULL` otherwise.
 ///
-#define VecPushBack(v, val) VecInsert(v, val, (v) ? (v)->length : -1)
+#define VecPushBack(v, val) VecInsert((v), (val), ((v) ? (v)->length : -1))
 
 ///
 /// Pop item from vector back.
@@ -219,7 +220,7 @@ typedef struct {
 /// SUCCESS : Returns `v` on success
 /// FAILURE : Returns NULL otherwise.
 ///
-#define VecPopBack(v, val) VecRemove(v, val, (v) ? (v)->length - 1)
+#define VecPopBack(v, val) VecRemove((v), (val), ((v) ? (v)->length - 1 : -1))
 
 ///
 /// Push item into vector front.
@@ -230,7 +231,7 @@ typedef struct {
 /// SUCCESS : Returns `v` the vector itself on success.
 /// FAILURE : Returns `NULL` otherwise.
 ///
-#define VecPushFront(v, val) VecInsert(v, val, 0)
+#define VecPushFront(v, val) VecInsert((v), (val), 0)
 
 ///
 /// Pop item from vector front.
@@ -243,34 +244,34 @@ typedef struct {
 /// SUCCESS : Returns `v` on success
 /// FAILURE : Returns NULL otherwise.
 ///
-#define VecPopFront(v, val) VecRemove(v, val, 0)
+#define VecPopFront(v, val) VecRemove((v), (val), 0)
 
 ///
 /// Delete last item from vec
 ///
-#define VecDeleteLast(v) VecPop(v, NULL)
+#define VecDeleteLast(v) VecPopBack((v), NULL)
 
 ///
 /// Delete item at given index
 ///
-#define VecDelete(v, idx) VecRemove(v, NULL, idx)
+#define VecDelete(v, idx) VecRemove((v), NULL, (idx))
 
 ///
 /// Delete item at given index using faster implementation.
 /// Order preservation is not guaranteed
 ///
-#define VecDeleteFast(v, idx) VecRemoveFast(v, NULL, idx)
+#define VecDeleteFast(v, idx) VecRemoveFast((v), NULL, (idx))
 
 ///
 /// Delete items in given range [start, start + count)
 ///
-#define VecDeleteRange(v, start, count) VecRemoveRange(v, NULL, start, count)
+#define VecDeleteRange(v, start, count) VecRemoveRange((v), NULL, (start), (count))
 
 ///
 /// Delete items in given range [start, start + count) using faster implementation.
 /// Order preservation is not guaranteed
 ///
-#define VecDeleteRangeFast(v, start, count) VecRemoveRangeFast(v, NULL, start, count)
+#define VecDeleteRangeFast(v, start, count) VecRemoveRangeFast((v), NULL, (start), (count))
 
 ///
 /// Sort given vector with given comparator using quicksort algorithm.
@@ -282,7 +283,7 @@ typedef struct {
 /// FAILURE : Returns NULL otherwise.
 ///
 #define VecSort(v, compare)                                                                        \
-    ((__typeof__(v))qsort_vec(GENERIC_VEC(v), sizeof((v)->data[0]), compare))
+    ((__typeof__(v))qsort_vec(GENERIC_VEC(v), sizeof((v)->data[0]), (compare)))
 
 ///
 /// Try reducing memory footprint of vector.
@@ -308,7 +309,7 @@ typedef struct {
 /// FAILURE : NULL
 ///
 #define VecSwapItems(v, idx1, idx2)                                                                \
-    ((__typeof__(v))swap_vec(GENERIC_VEC(v), sizeof((v)->data[0]), idx1, idx2))
+    ((__typeof__(v))swap_vec(GENERIC_VEC(v), sizeof((v)->data[0]), (idx1), (idx2)))
 
 ///
 /// Resize vector.
@@ -333,7 +334,7 @@ typedef struct {
 /// SUCCESS : `v`
 /// FAILURE : NULL
 ///
-#define VecResize(v, len) ((__typeof__(v))resize_vec(GENERIC_VEC(v), sizeof((v)->data[0]), len))
+#define VecResize(v, len) ((__typeof__(v))resize_vec(GENERIC_VEC(v), sizeof((v)->data[0]), (len)))
 
 ///
 /// Clear vec contents.
@@ -343,13 +344,14 @@ typedef struct {
 /// SUCCESS :
 /// FAILURE : NULL
 ///
-#define VecClear(v) VecDeinit(v)
+#define VecClear(v) ((__typeof__(v))clear_vec(GENERIC_VEC(v), sizeof((v)->data[0])))
+
 
 #define VecFirst(v)     (v)->data[0]
 #define VecLast(v)      (v)->data[(v)->length - 1]
 #define VecBegin(v)     (v)->data
 #define VecEnd(v)       ((v)->data + (v)->length)
-#define VecIter(v, idx) ((v)->data + idx)
+#define VecIter(v, idx) ((v)->data + (idx))
 #define VecAt(v, idx)   ((v)->data[idx])
 
 ///
@@ -361,7 +363,7 @@ typedef struct {
 /// SUCCESS : `v`
 /// FAILURE : NULL
 ///
-#define VecReserve(v, n) ((__typeof__(v))reserve_vec(GENERIC_VEC(v), n))
+#define VecReserve(v, n) ((__typeof__(v))reserve_vec(GENERIC_VEC(v), (n)))
 
 ///
 /// Push a complete array into this vector.
@@ -374,7 +376,7 @@ typedef struct {
 /// FAILURE : NULL
 ///
 #define VecPushArr(v, arr, count)                                                                  \
-    ((__typeof__(v))push_arr_vec(GENERIC_VEC(v), sizeof((v)->data[0]), arr, count))
+    ((__typeof__(v))push_arr_vec(GENERIC_VEC(v), sizeof((v)->data[0]), (arr), (count)))
 
 ///
 /// Merge two vectors and store the result in first vector.
@@ -423,6 +425,7 @@ GenericVec *init_vec(
     GenericCopyDeinit copy_deinit
 );
 void        deinit_vec(GenericVec *vec, size_t item_size);
+GenericVec *clear_vec(GenericVec *vec, size_t item_size);
 GenericVec *expand_vec(GenericVec *vec, size_t item_size);
 GenericVec *reserve_vec(GenericVec *vec, size_t item_size, size_t n);
 GenericVec *reserve_pow2_vec(GenericVec *vec, size_t item_size, size_t n);

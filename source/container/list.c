@@ -62,6 +62,9 @@ GenericList *insert_into_list(GenericList *list, void *item_data, size_t item_si
             return NULL;
         }
 
+        // TODO: remove a memcpy call
+        // this is a DList, we can do it!
+
         // shift data from current node to new node
         memcpy(GENERIC_LIST_NODE_DATA_PTR(new_node), GENERIC_LIST_NODE_DATA_PTR(node), item_size);
 
@@ -71,6 +74,10 @@ GenericList *insert_into_list(GenericList *list, void *item_data, size_t item_si
         new_node->prev = node;
         node->next     = new_node;
 
+        if(idx == list->length - 1) {
+            list->tail = new_node;
+        }
+
         // insert data new data into current node
         if(list->copy_init) {
             memset(GENERIC_LIST_NODE_DATA_PTR(node), 0, item_size);
@@ -78,41 +85,35 @@ GenericList *insert_into_list(GenericList *list, void *item_data, size_t item_si
         } else {
             memcpy(GENERIC_LIST_NODE_DATA_PTR(node), item_data, item_size);
         }
-    } else if(idx >= list->length) {
-        idx            = list->length;
-        new_node->next = NULL;
+    } else if(idx == list->length) {
+        GenericListNode *new_tail = new_node;
+        GenericListNode *old_tail = list->tail;
+        GenericListNode *head     = list->head;
 
-        GenericListNode *tail = node_at_list(list, item_size, -1);
-
-        // if there is no tail, current list length is 0
-        if(!tail) {
-            list->head     = new_node;
-            list->tail     = new_node;
-            new_node->prev = NULL;
-            new_node->next = NULL;
-
-            if(list->copy_init) {
-                memset(GENERIC_LIST_NODE_DATA_PTR(new_node), 0, item_size);
-                list->copy_init(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data);
-            } else {
-                memcpy(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data, item_size);
-            }
-            return list;
-        } else {
-            // create dual link & update tail
-            list->tail->next = new_node;
-            new_node->prev   = list->tail;
-            new_node->next   = NULL;
-            list->tail       = new_node;
-
-            if(list->copy_init) {
-                memset(GENERIC_LIST_NODE_DATA_PTR(new_node), 0, item_size);
-                list->copy_init(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data);
-            } else {
-                memcpy(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data, item_size);
-            }
-            tail->next = new_node;
+        if(!head) {
+            list->head = new_tail;
         }
+
+        if(old_tail) {
+            old_tail->next = new_tail;
+            new_tail->prev = old_tail;
+        } else {
+            new_tail->prev = NULL;
+        }
+
+        // create dual link & update tail
+        list->tail     = new_tail;
+        new_tail->next = NULL;
+
+        if(list->copy_init) {
+            memset(GENERIC_LIST_NODE_DATA_PTR(new_node), 0, item_size);
+            list->copy_init(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data);
+        } else {
+            memcpy(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data, item_size);
+        }
+    } else {
+        LOG_ERROR("list index out of range.");
+        return NULL;
     }
 
     list->length += 1;
@@ -163,8 +164,12 @@ GenericList *remove_range_list(
         // update link
         GenericListNode *next = node->next;
         GenericListNode *prev = node->prev;
-        prev->next            = next;
-        next->prev            = prev;
+        if(prev) {
+            prev->next = next;
+        }
+        if(next) {
+            next->prev = prev;
+        }
 
         // remove link
         node->next = NULL;
@@ -192,7 +197,7 @@ GenericList *
         return NULL;
     }
     size_t item_count = list->length;
-    remove_range_list(list, data, item_size, 0, -1);
+    remove_range_list(list, data, item_size, 0, list->length);
     qsort(data, item_count, item_size, comp);
     push_arr_list(list, item_size, data, item_count);
     free(data);
@@ -327,15 +332,10 @@ GenericListNode *node_at_list(GenericList *list, size_t item_size, size_t idx) {
     }
 
     GenericListNode *node = list->head;
-    while(node && idx--) {
-        if(!node->next) {
-            return node;
-        } else {
-            node = node->next;
-        }
+    for(size_t i = 0; i < idx; i++) {
+        node = node->next;
     }
-
-    return NULL;
+    return node;
 }
 
 

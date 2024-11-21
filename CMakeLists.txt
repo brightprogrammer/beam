@@ -10,5 +10,5 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wextra -Wall -Werror -fsanitize=address")
 
-include_directories(include)
+include_directories(include source)
 add_subdirectory(source)

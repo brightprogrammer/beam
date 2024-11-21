@@ -1,8 +1,8 @@
-/// file      : components/base.c
+/// file      : html.h
 /// author    : Siddharth Mishra (admin@brightprogrammer.in)
 /// copyright : Copyright (c) 2024, Siddharth Mishra, All rights reserved.
 ///
-/// Generic list implementation
+/// Internal HTML representation implementation
 
 #ifndef BEAM_HTML_H
 #define BEAM_HTML_H
@@ -18,6 +18,30 @@
 typedef List(String) Html;
 
 ///
+/// Initialize given html object with contents of file at given path.
+/// Resets the given html object and stores content in it.
+///
+/// html[in,out] : Html to be inited.
+/// filepath[in] : Path where file to be loaded is present.
+///
+/// SUCCESS : `html`
+/// FAILURE : NULL
+///
+Html *HtmlInitFromFile(Html *html, const char *filepath);
+
+///
+/// Html load from ZString
+/// Resets the given html object and stores msg in it.
+///
+/// html[in,out] : Html to be inited.
+/// msg[in]      : Null-terminated string to be stored in html.
+///
+/// SUCCESS : `html`
+/// FAILURE : NULL
+///
+Html *HtmlInitFromZStr(Html *html, const char *msg);
+
+///
 /// Wrap given html with `before_zstr` and `after_zstr`.
 ///
 /// html[in,out]    : Html to be wrapped.
@@ -28,5 +52,14 @@ typedef List(String) Html;
 /// FAILURE : NULL
 ///
 Html *HtmlWrap(Html *html, const char *before_zstr, const char *after_zstr);
+
+///
+/// Get complete size of html file by summing up all the components.
+///
+/// html[in] : Html to get size of.
+///
+/// RETURN : Total size of given html.
+///
+size_t HtmlGetCompleteSize(Html *html);
 
 #endif // BEAM_HTML_H

@@ -49,6 +49,28 @@ void deinit_vec(GenericVec *vec, size_t item_size) {
 }
 
 
+GenericVec *clear_vec(GenericVec *vec, size_t item_size) {
+    if(!vec || !item_size) {
+        LOG_ERROR("invalid arguments.");
+        return NULL;
+    }
+
+    if(vec->data) {
+        if(vec->copy_deinit) {
+            for(size_t i = 0; i < item_size; i++) {
+                vec->copy_deinit(vec->data + i * item_size);
+            }
+        } else {
+            memset(vec->data, 0, item_size * vec->capacity);
+        }
+    }
+
+    vec->length = 0;
+
+    return vec;
+}
+
+
 GenericVec *expand_vec(GenericVec *vec, size_t item_size) {
     if(!vec || !item_size) {
         LOG_ERROR("invalid arguments.");
@@ -63,7 +85,7 @@ GenericVec *expand_vec(GenericVec *vec, size_t item_size) {
             LOG_ERROR("realloc() failed : %s.", strerror(errno));
             return NULL;
         }
-        memset(vec->data + vec->capacity, 0, item_size * (n - vec->capacity));
+        memset(ptr + vec->capacity * item_size, 0, item_size * (n - vec->capacity));
         vec->data     = ptr;
         vec->capacity = n;
     }
@@ -84,7 +106,7 @@ GenericVec *reserve_vec(GenericVec *vec, size_t item_size, size_t n) {
             LOG_ERROR("realloc() failed : %s.", strerror(errno));
             return NULL;
         }
-        memset(vec->data + vec->capacity, 0, item_size * (n - vec->capacity));
+        memset(ptr + vec->capacity * item_size, 0, item_size * (n - vec->capacity));
         vec->data     = ptr;
         vec->capacity = n;
     }
@@ -380,6 +402,8 @@ GenericVec *push_arr_vec(GenericVec *vec, size_t item_size, void *arr, size_t co
     } else {
         memcpy(vec->data + vec->length * item_size, arr, count * item_size);
     }
+
+    vec->length += count;
 
     return vec;
 }

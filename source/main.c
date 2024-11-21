@@ -15,6 +15,7 @@
 #include <beam/container/list.h>
 #include <beam/container/string.h>
 #include <beam/http.h>
+#include <frontend/frontend.h>
 
 #define PORT 3000
 
@@ -28,10 +29,6 @@
 /// connfd[in] : Connection socket file descriptor.
 ///
 void SendInternalServerErrorResponse(const char *msg, int connfd) {
-    String str;
-    char   m;
-    StringPopChar(&str, &m);
-
     static char *html_start = "<html><head><title>500</title></head><body>";
     msg                     = msg ? msg : "internal server error, beam is sorry :-(";
     static char *html_end   = "</body></html>";
@@ -63,17 +60,16 @@ void SendInternalServerErrorResponse(const char *msg, int connfd) {
 /// code[in]   : HTTP response code.
 /// connfd[in] : Connection socket file descriptor.
 ///
-void SendStaticHtmlFileResponse(const char *path, HttpResponseCode code, int connfd) {
-    if(!path || connfd < 0) {
+void SendStaticHtmlResponse(Html *html, HttpResponseCode code, int connfd) {
+    if(!html || connfd < 0) {
         LOG_ERROR("invalid path");
         SendInternalServerErrorResponse(NULL, connfd);
         return;
     }
 
     HttpResponse response = {0};
-    HttpResponseInitFromFile(&response, code, HTTP_CONTENT_TYPE_TEXT_HTML, path);
+    HttpResponseInitForHtml(&response, code, html);
     HttpResponseSend(&response, connfd);
-    HttpResponseReset(&response);
 }
 
 void ServerMain(int connfd, HttpRequest request) {
@@ -83,10 +79,17 @@ void ServerMain(int connfd, HttpRequest request) {
         return;
     }
 
-    if(0 == strcmp(request.url, "/") || 0 == strcmp(request.url, "/index.html")) {
-        SendStaticHtmlFileResponse("frontend/index.html", HTTP_RESPONSE_CODE_OK, connfd);
+    Html html = {0};
+
+    if(0 == strcmp(request.url, "/")) {
+        HtmlInitFromZStr(&html, "template engine is being tested");
+        SendStaticHtmlResponse(&html, HTTP_RESPONSE_CODE_OK, connfd);
     } else {
-        SendStaticHtmlFileResponse("frontend/404.html", HTTP_RESPONSE_CODE_NOT_FOUND, connfd);
+        HtmlInitFromZStr(
+            &html,
+            "uh oh! you reached 404... what you're looking for is not here ;-D"
+        );
+        SendStaticHtmlResponse(&html, HTTP_RESPONSE_CODE_NOT_FOUND, connfd);
     }
 }
 
@@ -154,17 +157,6 @@ int main() {
         if(!HttpRequestParse(&req, buf, &rem_size)) {
             LOG_ERROR("failed to parse http request");
             LOG_ERROR("request was :\n%s", buf);
-
-            HttpResponse response;
-            HttpResponseInitFromFile(
-                &response,
-                HTTP_RESPONSE_CODE_BAD_REQUEST,
-                HTTP_CONTENT_TYPE_TEXT_HTML,
-                "frontend/badrequest.html"
-            );
-            HttpResponseSend(&response, connfd);
-            HttpResponseReset(&response);
-
             continue;
         }
 

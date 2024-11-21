@@ -14,6 +14,17 @@
 
 typedef Vec(char) String;
 
+#define TempStringFromCStr(str, cstr, len)                                                         \
+    do {                                                                                           \
+        (str)->data        = (char*)(cstr);                                                        \
+        (str)->length      = (len);                                                                \
+        (str)->capacity    = (len);                                                                \
+        (str)->copy_init   = NULL;                                                                 \
+        (str)->copy_deinit = NULL;                                                                 \
+    } while(0)
+
+#define TempStringFromZStr(str, zstr) TempStringFromCStr(str, zstr, strlen(zstr))
+
 ///
 /// Initialize given string.
 ///
@@ -59,8 +70,6 @@ typedef Vec(char) String;
 /// Insert char into string of it's type.
 /// Insertion index must not exceed string length.
 ///
-/// In worst case this would to to O(n)
-///
 /// str[in] : String to insert char into
 /// chr[in] : Character to be inserted
 /// idx[in] : Index to insert char at.
@@ -79,7 +88,7 @@ typedef Vec(char) String;
 /// SUCCESS : Returns `str` the string itself on success.
 /// FAILURE : Returns `NULL` otherwise.
 ///
-#define StringPushChar(str, chr) VecPush(str, ((char[])({chr}))
+#define StringPushBack(str, chr) VecPushBack(str, ((char[])({chr}))
 
 ///
 /// Pop char from string back.
@@ -92,7 +101,31 @@ typedef Vec(char) String;
 /// SUCCESS : Returns `str` on success
 /// FAILURE : Returns NULL otherwise.
 ///
-#define StringPopChar(str, chr) VecPop(str, chr)
+#define StringPopBack(str, chr) VecPopBack(str, chr)
+
+///
+/// Push char into string front.
+///
+/// str[in] : String to push char into
+/// chr[in] : Pointer to value to be pushed
+///
+/// SUCCESS : Returns `str` the string itself on success.
+/// FAILURE : Returns `NULL` otherwise.
+///
+#define StringPushFront(str, chr) VecPushFront(str, ((char[])({chr}))
+
+///
+/// Pop char from string front.
+///
+/// str[in,out] : String to pop char from.
+/// val[out]    : Popped char will be stored here. Make sure this has sufficient memory
+///              to store memcopied data. If no pointer is provided, then it's equivalent
+///              to deleting char from last position.
+///
+/// SUCCESS : Returns `str` on success
+/// FAILURE : Returns NULL otherwise.
+///
+#define StringPopFront(str, chr) VecPopFront(str, chr)
 
 ///
 /// Remove char from string at given index and store in given pointer.

@@ -13,7 +13,8 @@
 #include <stdbool.h>
 
 // beam
-#include <beam/container/vec.h>
+#include <beam/container/string.h>
+#include <beam/html.h>
 
 typedef enum {
     HTTP_REQUEST_METHOD_GET,
@@ -311,38 +312,44 @@ typedef struct {
     HttpContentType  content_type;
     HttpResponseCode status_code;
     HttpHeaders      headers;
-    void            *body; // response body, like an html data
-    size_t           body_size;
-    size_t           body_capacity;
+    String           body;
 } HttpResponse;
 
 ///
-/// Initialize given http response as html response.
-/// This is best to use when serving a web-page or when serving a static
-/// webpage stored in a file.
+/// Init response from html
 ///
-/// response[out]    : Where inited http response will be stored.
-/// status_code[in]  : Http status code to initialize this for.
-/// content_type[in] : Type of content the file contains. This will be used to
-///                    automatically add a valid header in http response.
-/// filename[in]     : Name/path of html file to be loaded.
+/// response[in,out] : Http response to be sent out.
+/// status[in]       : Http response status code.
+/// html[in]         : Html data to be sent out.
 ///
 /// SUCCESS : `response`
 /// FAILURE : NULL
 ///
-HttpResponse *HttpResponseInitFromFile(
-    HttpResponse    *response,
-    HttpResponseCode status_code,
-    HttpContentType  content_type,
-    const char      *filename
-);
+HttpResponse *HttpResponseInitForHtml(HttpResponse *response, HttpResponseCode status, Html *html);
 
+///
+/// Init this response for file at given path.
+///
+/// response[in,out] : Response to be initialized.
+/// status[in]       : Http response code.
+/// content_type[in] : Content type stored in file.
+/// filepath[in]     ; Path at which file is present.
+///
+/// SUCCESS : `response`
+/// FAILURE : NULL
+///
+HttpResponse *HttpResponseInitForFile(
+    HttpResponse    *response,
+    HttpResponseCode status,
+    HttpContentType  content_type,
+    const char      *filepath
+);
 
 ///
 /// Send prepared http response.
 ///
-/// response[in] : Prepared response to be sent.
-/// connfd[in]   : Socket file descriptor to called send upon
+/// response[in]       : Prepared response to be sent.
+/// connfd[in]         : Socket file descriptor to called send upon
 ///
 /// SUCCESS : `response`
 /// FAILURE : NULL
