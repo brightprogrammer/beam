@@ -37,9 +37,6 @@ Html* WrapBase(Html* html) {
         return NULL;
     }
 
-    // remove any previous data
-    ListInit(html, StringInitCopy, StringDeinitCopy);
-
     const char* before =
         "<!doctype html><html>"
         "<head>"
@@ -52,7 +49,7 @@ Html* WrapBase(Html* html) {
         "</body>"
         "</html>";
 
-    if(!HtmlWrap(WrapContent(html), before, after)) {
+    if(!HtmlWrap(html, before, after)) {
         LOG_ERROR("failed to wrap html.");
         return NULL;
     }

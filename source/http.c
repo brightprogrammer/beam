@@ -287,10 +287,10 @@ const char *
         return raw_request_str;
     }
 
-    VecInit(headers, NULL, NULL);
+    HttpHeadersFreeAll(headers);
 
     // parse all headers
-    HttpHeader header;
+    HttpHeader header              = {0};
     bool       more_headers_remain = true;
     while(more_headers_remain) {
         raw_request_str =
@@ -321,10 +321,12 @@ void HttpHeadersFreeAll(HttpHeaders *headers) {
     VecForeachPtr(headers, header, iter) {
         if(header->key) {
             free((void *)header->key);
+            header->key = NULL;
         }
 
         if(header->value) {
             free((void *)header->value);
+            header->value = NULL;
         }
     }
 

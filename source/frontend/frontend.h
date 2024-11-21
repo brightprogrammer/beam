@@ -3,7 +3,7 @@
 
 #include <beam/html.h>
 
-
-Html* HtmlBase(Html* html);
+Html* WrapContent(Html* html);
+Html* WrapBase(Html* html);
 
 #endif // BEAM_FRONTEND_H

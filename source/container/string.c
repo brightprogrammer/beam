@@ -13,22 +13,9 @@ String* StringInitCopy(String* dst, String* src) {
         return NULL;
     }
 
-    if(!src->data || !src->length) {
-        LOG_ERROR("invalid string provided to create copy from.");
-        return NULL;
-    }
-
-    if(dst->data) {
-        memset(dst->data, 0, dst->length);
-        free(dst->data);
-    }
-
-    dst->data        = NULL;
-    dst->length      = 0;
-    dst->capacity    = 0;
+    VecClear(dst);
     dst->copy_init   = src->copy_init;
     dst->copy_deinit = src->copy_deinit;
-
     return VecMerge(dst, src);
 }
 
@@ -43,6 +30,8 @@ String* StringDeinitCopy(String* copy) {
         memset(copy->data, 0, copy->length);
         free(copy->data);
     }
+
+    memset(copy, 0, sizeof(String));
 
     return copy;
 }

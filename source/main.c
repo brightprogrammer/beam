@@ -83,14 +83,17 @@ void ServerMain(int connfd, HttpRequest request) {
 
     if(0 == strcmp(request.url, "/")) {
         HtmlInitFromZStr(&html, "template engine is being tested");
+        WrapBase(WrapContent(&html));
         SendStaticHtmlResponse(&html, HTTP_RESPONSE_CODE_OK, connfd);
     } else {
         HtmlInitFromZStr(
             &html,
             "uh oh! you reached 404... what you're looking for is not here ;-D"
         );
+        WrapBase(WrapContent(&html));
         SendStaticHtmlResponse(&html, HTTP_RESPONSE_CODE_NOT_FOUND, connfd);
     }
+    ListDeinit(&html);
 }
 
 int main() {
@@ -110,11 +113,11 @@ int main() {
     }
 
     // bind socket to an addres
-    struct sockaddr_in6 server_addr;
-    server_addr.sin6_family = AF_INET6;
-    server_addr.sin6_addr   = in6addr_any;
-    server_addr.sin6_port   = htons(PORT);
-    res                     = bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    struct sockaddr_in6 server_addr = {0};
+    server_addr.sin6_family         = AF_INET6;
+    server_addr.sin6_addr           = in6addr_any;
+    server_addr.sin6_port           = htons(PORT);
+    res = bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
     if(-1 == res) {
         LOG_ERROR("bind() failed : %s", strerror(errno));
         close(sockfd);
@@ -133,11 +136,11 @@ int main() {
     char   buf[UINT16_MAX] = {0};
     size_t buf_size        = UINT16_MAX - 1;
 
-    HttpRequest req;
+    HttpRequest req = {0};
     while(true) {
-        struct sockaddr_storage client_addr;
-        socklen_t               addrlen = sizeof(client_addr);
-        int                     connfd  = accept(sockfd, (struct sockaddr *)&client_addr, &addrlen);
+        struct sockaddr_storage client_addr = {0};
+        socklen_t               addrlen     = sizeof(client_addr);
+        int                     connfd = accept(sockfd, (struct sockaddr *)&client_addr, &addrlen);
         if(-1 == connfd) {
             LOG_ERROR("listen() failed : %s", strerror(errno));
             close(sockfd);

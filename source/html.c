@@ -47,6 +47,7 @@ Html *HtmlInitFromZStr(Html *html, const char *msg) {
     String str;
     TempStringFromZStr(&str, msg);
     ListPushBack(html, &str);
+    memset(&str, 0, sizeof(String));
 
     return html;
 }
@@ -58,13 +59,12 @@ Html *HtmlWrap(Html *html, const char *before_zstr, const char *after_zstr) {
         return NULL;
     }
 
-    String before;
-    TempStringFromZStr(&before, before_zstr);
-    String after;
-    TempStringFromZStr(&after, after_zstr);
-
-    ListPushFront(html, &before);
-    ListPushBack(html, &after);
+    String data[2];
+    TempStringFromZStr(data, before_zstr);
+    TempStringFromZStr(data + 1, after_zstr);
+    ListPushFront(html, data);
+    ListPushBack(html, data + 1);
+    memset(data, 0, sizeof(data));
 
     return html;
 }

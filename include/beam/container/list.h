@@ -164,7 +164,7 @@ typedef struct {
 /// SUCCESS : Returns `v` the list itself on success.
 /// FAILURE : Returns `NULL` otherwise.
 ///
-#define ListPushBack(l, val) ListInsert((l), (val), ((l) ? (l)->length : -1))
+#define ListPushBack(l, val) ListInsert((l), (val), ((l) ? (l)->length : (size_t)-1))
 
 ///
 /// Pop item from list back.
@@ -177,7 +177,7 @@ typedef struct {
 /// SUCCESS : Returns `v` on success
 /// FAILURE : Returns NULL otherwise.
 ///
-#define ListPopBack(l, val) ListRemove((l), (val), ((l) ? (l)->length - 1 : -1), -1);
+#define ListPopBack(l, val) ListRemove((l), (val), ((l) ? (l)->length - 1 : (size_t)-1));
 
 ///
 /// Remove data from list in given range [start, start + count)
@@ -259,7 +259,7 @@ typedef struct {
 ///
 /// Value at last node in list
 ///
-#define ListLast(l) ListAt(l, ((l) ? (l)->length : -1))
+#define ListLast(l) ListAt(l, ((l) ? (l)->length : (size_t)-1))
 
 ///
 /// Node at given index in list
@@ -319,14 +319,14 @@ typedef struct {
     (iter) = 0;                                                                                    \
     if((l) && (l)->length > 0)                                                                     \
         for(GenericListNode *__node = GENERIC_LIST_NODE((l)->head);                                \
-            __node != NULL && (((var) = &((LIST_NODE_TYPE(l) *)__node)->data), 1);                 \
+            __node != NULL && (((var) = GENERIC_LIST_NODE_DATA_PTR(__node)), 1);                   \
             ++(iter), __node = __node->next)
 
 #define ListForeachPtrReverse(l, var, iter)                                                        \
     (iter) = 0;                                                                                    \
     if((l) && (l)->length > 0)                                                                     \
         for(GenericListNode *__node = GENERIC_LIST_NODE((l)->tail);                                \
-            __node != NULL && (((var) = &((LIST_NODE_TYPE(l) *)__node)->data), 1);                 \
+            __node != NULL && (((var) = GENERIC_LIST_NODE_DATA_PTR(__node)), 1);                   \
             ++(iter), __node = __node->prev)
 
 GenericList *init_list(

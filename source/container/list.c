@@ -54,36 +54,26 @@ GenericList *insert_into_list(GenericList *list, void *item_data, size_t item_si
     }
 
     if(idx < list->length) {
-        // get node where insertion will take place
-        GenericListNode *node = node_at_list(list, item_size, idx);
-        if(!node) {
-            LOG_ERROR("failed to get node.\n");
-            free(new_node);
-            return NULL;
-        }
+        // get node after which insertion will take place
+        GenericListNode *node = 0 == list->length ? NULL : node_at_list(list, item_size, idx)->prev;
 
-        // TODO: remove a memcpy call
-        // this is a DList, we can do it!
-
-        // shift data from current node to new node
-        memcpy(GENERIC_LIST_NODE_DATA_PTR(new_node), GENERIC_LIST_NODE_DATA_PTR(node), item_size);
-
-        // create dual link
-        // add new node after current node
-        new_node->next = node->next;
-        new_node->prev = node;
-        node->next     = new_node;
-
-        if(idx == list->length - 1) {
-            list->tail = new_node;
+        // node can be NULL only when we're inserting at head
+        if(node) {
+            new_node->prev = node;
+            new_node->next = node->next;
+            node->next     = new_node;
+        } else {
+            new_node->next = list->head;
+            list->head     = new_node;
+            new_node->prev = NULL;
         }
 
         // insert data new data into current node
         if(list->copy_init) {
-            memset(GENERIC_LIST_NODE_DATA_PTR(node), 0, item_size);
-            list->copy_init(GENERIC_LIST_NODE_DATA_PTR(node), item_data);
+            memset(GENERIC_LIST_NODE_DATA_PTR(new_node), 0, item_size);
+            list->copy_init(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data);
         } else {
-            memcpy(GENERIC_LIST_NODE_DATA_PTR(node), item_data, item_size);
+            memcpy(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data, item_size);
         }
     } else if(idx == list->length) {
         GenericListNode *new_tail = new_node;
@@ -131,6 +121,10 @@ GenericList *remove_range_list(
     if(!list || !item_size) {
         LOG_ERROR("invalid arguments.");
         return NULL;
+    }
+
+    if(count == 0) {
+        return list;
     }
 
     if(start + count > list->length) {

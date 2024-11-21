@@ -207,7 +207,7 @@ typedef struct {
 /// SUCCESS : Returns `v` the vector itself on success.
 /// FAILURE : Returns `NULL` otherwise.
 ///
-#define VecPushBack(v, val) VecInsert((v), (val), ((v) ? (v)->length : -1))
+#define VecPushBack(v, val) VecInsert((v), (val), ((v) ? (v)->length : (size_t)-1))
 
 ///
 /// Pop item from vector back.
@@ -220,7 +220,7 @@ typedef struct {
 /// SUCCESS : Returns `v` on success
 /// FAILURE : Returns NULL otherwise.
 ///
-#define VecPopBack(v, val) VecRemove((v), (val), ((v) ? (v)->length - 1 : -1))
+#define VecPopBack(v, val) VecRemove((v), (val), ((v) ? (v)->length - 1 : (size_t)-1))
 
 ///
 /// Push item into vector front.
