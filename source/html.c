@@ -4,6 +4,9 @@
 ///
 /// Generic html implementation
 
+#include <stdarg.h>
+
+// beam
 #include <beam/html.h>
 #include <beam/log.h>
 #include <beam/file.h>
@@ -65,6 +68,52 @@ Html *HtmlWrap(Html *html, const char *before_zstr, const char *after_zstr) {
     ListPushFront(html, data);
     ListPushBack(html, data + 1);
     memset(data, 0, sizeof(data));
+
+    return html;
+}
+
+
+Html *HtmlAppendCStr(Html *html, const char *cstr, size_t len) {
+    if(!html || !cstr || !len) {
+        LOG_ERROR("invalid arguments");
+        return NULL;
+    }
+
+    String str = {0};
+    TempStringFromCStr(&str, cstr, len);
+    ListPushBack(html, &str);
+    memset(&str, 0, sizeof(String));
+
+    return html;
+}
+
+
+Html *HtmlAppendFmt(Html *html, const char *fmt, ...) {
+    if(!html || !fmt) {
+        LOG_ERROR("invalid arguments");
+        return NULL;
+    }
+
+    va_list args;
+    va_list args_copy;
+    va_start(args, fmt);
+    va_copy(args_copy, args);
+
+    size_t n    = vsnprintf(NULL, 0, fmt, args);
+    char  *data = malloc(n + 1);
+    if(!data) {
+        LOG_ERROR("malloc() failed : %s.", strerror(errno));
+        return NULL;
+    }
+    data[n] = 0;
+
+    vsnprintf(data, n + 1, fmt, args_copy);
+    HtmlAppendCStr(html, data, n);
+    memset(data, 0, n + 1);
+    free(data);
+
+    va_end(args_copy);
+    va_end(args);
 
     return html;
 }

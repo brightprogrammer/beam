@@ -26,6 +26,18 @@ typedef Vec(char) String;
 #define TempStringFromZStr(str, zstr) TempStringFromCStr(str, zstr, strlen(zstr))
 
 ///
+/// Init the string using the given format string and arguments.
+/// Current contents of string will be cleared out
+///
+/// str[in,out] : String to be inited with format string.
+/// fmt[in]     : Format string, with variadic arguments following.
+///
+/// SUCCESS : `str`
+/// FAILURE : NULL
+///
+String* StringInitFmt(String* str, const char* fmt, ...) __attribute__((format(printf, 2, 3)));
+
+///
 /// Initialize given string.
 ///
 /// str : Pointer to string memory that needs to be initialized.

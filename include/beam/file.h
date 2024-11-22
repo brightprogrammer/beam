@@ -10,6 +10,53 @@
 #include <stdint.h>
 #include <stddef.h>
 
+// beam
+#include <beam/container/string.h>
+
+typedef enum {
+    DIR_ENTRY_TYPE_UNKNOWN,
+    DIR_ENTRY_TYPE_REGULAR_FILE,
+    DIR_ENTRY_TYPE_DIRECTORY,
+    DIR_ENTRY_TYPE_PIPE,
+    DIR_ENTRY_TYPE_SOCKET,
+    DIR_ENTRY_TYPE_CHARACTER_DEVICE,
+    DIR_ENTRY_TYPE_BLOCK_DEVICE,
+    DIR_ENTRY_TYPE_SYMBOLIC_LINK
+} DirEntryType;
+
+///
+/// Convert given entry type to a NULL terminated string.
+/// Provided string must not be freed as it's not allocated.
+///
+/// type[in] : Entry type to get string of.
+///
+/// RETURN : Null terminated string.
+///
+const char *DirEntryTypeToZStr(DirEntryType type);
+
+typedef struct {
+    DirEntryType type;
+    size_t       size;
+    String       name;
+} DirEntry;
+
+DirEntry *DirEntryInitCopy(DirEntry *dst, DirEntry *src);
+DirEntry *DirEntryDeinitCopy(DirEntry *copy);
+
+typedef Vec(DirEntry) DirContents;
+
+///
+/// Read directory contents into a vector
+/// Current contents of the vector will be cleared out.
+///
+/// dir[in,out] : Directory contents will be stored here.
+/// path[in]    : Path of directory get content of.
+///
+/// SUCCESS : `dir`
+/// FAILURE : NULL
+///
+DirContents *ReadDirContents(DirContents *dir, const char *path);
+
 ///
 /// Get size of file without opening it.
 ///

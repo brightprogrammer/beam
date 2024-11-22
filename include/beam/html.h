@@ -54,6 +54,41 @@ Html *HtmlInitFromZStr(Html *html, const char *msg);
 Html *HtmlWrap(Html *html, const char *before_zstr, const char *after_zstr);
 
 ///
+/// Append given string to given html.
+///
+/// html[in,out] : Html to append string into.
+/// zstr[in]     : Content to be pushed into html
+/// len[in]      : Length of given string.
+///
+/// SUCCESS : `html`
+/// FAILURE : NULL
+///
+Html *HtmlAppendCStr(Html *html, const char *cstr, size_t len);
+
+///
+/// Append given null-terminated string to given html.
+///
+/// html[in,out] : Html to append string into.
+/// zstr[in]     : Content to be pushed into html
+/// len[in]      : Length of given string.
+///
+/// SUCCESS : `html`
+/// FAILURE : NULL
+///
+#define HtmlAppendZStr(html, zstr) HtmlAppendCStr((html), (zstr), strlen((zstr)))
+
+///
+/// Append a formatted string to given html.
+///
+/// html[in,out] : Html to append formatted string into.
+/// fmt[in]      : Format string, followed by variadic arguments.
+///
+/// SUCCESS : `html`
+/// FAILURE : NULL
+///
+Html *HtmlAppendFmt(Html *html, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+
+///
 /// Get complete size of html file by summing up all the components.
 ///
 /// html[in] : Html to get size of.

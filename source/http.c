@@ -359,6 +359,8 @@ const char *
         return NULL;
     }
 
+    request->raw = raw_request_str;
+
     // temporary variable to avoid directly changing remainning size
     size_t rem_size = *remaining_size;
     if(!rem_size) {

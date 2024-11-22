@@ -11,10 +11,11 @@
 
 // beam
 #include <beam/log.h>
+#include <beam/file.h>
+#include <beam/http.h>
 #include <beam/container/vec.h>
 #include <beam/container/list.h>
 #include <beam/container/string.h>
-#include <beam/http.h>
 #include <frontend/frontend.h>
 
 #define PORT 3000
@@ -51,7 +52,8 @@ void SendInternalServerErrorResponse(const char *msg, int connfd) {
 }
 
 ///
-/// Send a static html file response;
+/// Send a html response
+///
 /// Function guarantees that an http response gets sent if atleast connfd is correct.
 /// Even if html file fails to load, or any other error occurs, an internal server
 /// error response gets sent automatically.
@@ -60,7 +62,7 @@ void SendInternalServerErrorResponse(const char *msg, int connfd) {
 /// code[in]   : HTTP response code.
 /// connfd[in] : Connection socket file descriptor.
 ///
-void SendStaticHtmlResponse(Html *html, HttpResponseCode code, int connfd) {
+void SendHtmlResponse(Html *html, HttpResponseCode code, int connfd) {
     if(!html || connfd < 0) {
         LOG_ERROR("invalid path");
         SendInternalServerErrorResponse(NULL, connfd);
@@ -72,27 +74,76 @@ void SendStaticHtmlResponse(Html *html, HttpResponseCode code, int connfd) {
     HttpResponseSend(&response, connfd);
 }
 
-void ServerMain(int connfd, HttpRequest request) {
-    HttpHeader *host = HttpHeadersFind(&request.headers, "Host");
+///
+/// Serve all files at given path.
+///
+/// connfd[in]  : Connection socket file descriptor.
+/// path[in]    : Path to be served.
+/// request[in] : HTTP equest received.
+///
+void ServeDirectory(Html *html, const char *local_path, HttpRequest *request) {
+    if(!html || !local_path || !request) {
+        LOG_ERROR("invalid arguments.");
+        return;
+    }
+
+    DirContents dir = {0};
+    if(ReadDirContents(&dir, local_path)) {
+        WrapDirContents(html, &dir);
+        VecDeinit(&dir);
+    } else {
+        size_t file_path_len = strlen(local_path);
+
+        // remove extra "/" if present
+        if(local_path[file_path_len - 1] == '/') {
+            file_path_len--;
+            ((char *)local_path)[file_path_len] = 0;
+        }
+
+        // if file has some size, serve it
+        size_t file_size = GetFileSize(local_path);
+        if(file_size) {
+            WrapFileContent(html, local_path);
+        } else {
+            LOG_ERROR("failed to get file/directory.");
+            Wrap404(html);
+            return;
+        }
+    }
+}
+
+void ServerMain(int connfd, HttpRequest *request) {
+    HttpHeader *host = HttpHeadersFind(&request->headers, "Host");
     if(!host) {
         LOG_ERROR("host not specified.");
         return;
     }
 
     Html html = {0};
+    ListInit(&html, StringInitCopy, StringDeinitCopy);
 
-    if(0 == strcmp(request.url, "/")) {
-        HtmlInitFromZStr(&html, "template engine is being tested");
-        WrapBase(WrapContent(&html));
-        SendStaticHtmlResponse(&html, HTTP_RESPONSE_CODE_OK, connfd);
+    if(0 == strcmp(host->value, "code.brightprogrammer.in") ||
+       0 == strncmp(host->value, "code.localhost", strlen("code.localhost"))) {
+        String path = {0};
+#if __linux__
+        StringInitFmt(&path, "%s/blog/%s", getenv("HOME"), request->url);
+#elif __APPLE__
+        StringInitFmt(&path, "/Users/misra/Desktop/blog/%s", request->url);
+#endif
+        ServeDirectory(&html, path.data, request);
+        StringDeinit(&path);
     } else {
-        HtmlInitFromZStr(
+        HtmlAppendFmt(
             &html,
-            "uh oh! you reached 404... what you're looking for is not here ;-D"
+            "Beam now hosts it's own code.<br />"
+            "Wanna check it out?</br>"
+            "Visit <a href=\"code.%s\" target=\"_blank\">code.brightprogrammer.in</a>",
+            host->value
         );
-        WrapBase(WrapContent(&html));
-        SendStaticHtmlResponse(&html, HTTP_RESPONSE_CODE_NOT_FOUND, connfd);
     }
+
+    WrapBase(WrapContent(&html));
+    SendHtmlResponse(&html, HTTP_RESPONSE_CODE_OK, connfd);
     ListDeinit(&html);
 }
 
@@ -163,7 +214,7 @@ int main() {
             continue;
         }
 
-        ServerMain(connfd, req);
+        ServerMain(connfd, &req);
 
         HttpRequestReset(&req);
 

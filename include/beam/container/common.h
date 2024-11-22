@@ -10,8 +10,10 @@
 // All deinit methods are expected to properly deinitialize all pointers
 // to NULL. It's better if data is memset to 0.
 //
-// All init methods can expect to get dst memsetted to 0. So all fields will be
-// invalid by default and using invalid pointers will directly trigger segfault.
+// All init methods must expect to get a pre-initialized dst object.
+// If that is the case then they must properly de-initialize the dst object
+// or attempt to reuse any resources if possible and then initialize the copy
+// from src to dst.
 
 typedef void *(*GenericCopyInit)(void *dst, void *src);
 typedef void *(*GenericCopyDeinit)(void *copy);

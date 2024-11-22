@@ -11,7 +11,125 @@
 #include <beam/log.h>
 
 // platform
+#include <dirent.h>
 #include <sys/stat.h>
+
+const char *DirEntryTypeToZStr(DirEntryType type) {
+    switch(type) {
+        case DIR_ENTRY_TYPE_UNKNOWN :
+            return "Unknown";
+        case DIR_ENTRY_TYPE_REGULAR_FILE :
+            return "Regular File";
+        case DIR_ENTRY_TYPE_DIRECTORY :
+            return "Directory";
+        case DIR_ENTRY_TYPE_PIPE :
+            return "Pipe";
+        case DIR_ENTRY_TYPE_SOCKET :
+            return "Socket";
+        case DIR_ENTRY_TYPE_CHARACTER_DEVICE :
+            return "Character Device";
+        case DIR_ENTRY_TYPE_BLOCK_DEVICE :
+            return "Block Device";
+        case DIR_ENTRY_TYPE_SYMBOLIC_LINK :
+            return "Symbolic Link";
+        default :
+            return "Invalid Type";
+    }
+}
+
+
+DirEntry *DirEntryInitCopy(DirEntry *dst, DirEntry *src) {
+    if(!dst || !src) {
+        LOG_ERROR("invalid arguments.");
+        return NULL;
+    }
+
+    dst->type = src->type;
+    StringInitCopy(&dst->name, &src->name);
+
+    return dst;
+}
+
+
+DirEntry *DirEntryDeinitCopy(DirEntry *copy) {
+    if(!copy) {
+        LOG_ERROR("invalid arguments.");
+        return NULL;
+    }
+
+    StringDeinitCopy(&copy->name);
+    copy->type = 0;
+
+    return copy;
+}
+
+
+DirContents *ReadDirContents(DirContents *dir_contents, const char *path) {
+    if(!dir_contents || !path) {
+        LOG_ERROR("invalid arguments.");
+        return NULL;
+    }
+
+    // Make sure dir vec is cleared out and also has copy initer and deiniter methods
+    VecInit(dir_contents, DirEntryInitCopy, DirEntryDeinitCopy);
+
+    DIR *dir = opendir(path);
+    if(NULL == dir) {
+        LOG_ERROR("opendir() failed : %s.", strerror(errno));
+        return NULL;
+    }
+
+#define DNAME(idx) entry->d_name[idx]
+
+    struct dirent *entry = NULL;
+    while(NULL != (entry = readdir(dir))) {
+        if('.' == DNAME(0) && 0 == DNAME(1)) {
+            continue;
+        } else if('.' == DNAME(0) && '.' == DNAME(1) && 0 == DNAME(2)) {
+            continue;
+        } else {
+            DirEntry direntry = {0};
+            switch(entry->d_type) {
+                case DT_REG :
+                    direntry.type = DIR_ENTRY_TYPE_REGULAR_FILE;
+                    break;
+                case DT_DIR :
+                    direntry.type = DIR_ENTRY_TYPE_DIRECTORY;
+                    break;
+                case DT_FIFO :
+                    direntry.type = DIR_ENTRY_TYPE_PIPE;
+                    break;
+                case DT_SOCK :
+                    direntry.type = DIR_ENTRY_TYPE_SOCKET;
+                    break;
+                case DT_CHR :
+                    direntry.type = DIR_ENTRY_TYPE_CHARACTER_DEVICE;
+                    break;
+                case DT_BLK :
+                    direntry.type = DIR_ENTRY_TYPE_BLOCK_DEVICE;
+                    break;
+                case DT_LNK :
+                    direntry.type = DIR_ENTRY_TYPE_SYMBOLIC_LINK;
+                    break;
+                case DT_UNKNOWN :
+                default :
+                    direntry.type = DIR_ENTRY_TYPE_UNKNOWN;
+            }
+#if __APPLE__
+            TempStringFromCStr(&direntry.name, entry->d_name, entry->d_namlen);
+#elif __linux__
+            TempStringFromCStr(&direntry.name, entry->d_name, entry->d_reclen);
+#endif
+            VecPushBack(dir_contents, &direntry);
+        }
+    }
+
+#undef DNAME
+
+    closedir(dir);
+
+    return dir_contents;
+}
 
 
 int64_t GetFileSize(const char *filename) {

@@ -19,9 +19,9 @@ GenericVec *init_vec(
         return NULL;
     }
 
+    deinit_vec(vec, item_size);
     vec->copy_init   = copy_init;
     vec->copy_deinit = copy_deinit;
-    deinit_vec(vec, item_size);
 
     return vec;
 }
@@ -35,7 +35,7 @@ void deinit_vec(GenericVec *vec, size_t item_size) {
 
     if(vec->data) {
         if(vec->copy_deinit) {
-            for(size_t i = 0; i < item_size; i++) {
+            for(size_t i = 0; i < vec->length; i++) {
                 vec->copy_deinit(vec->data + i * item_size);
             }
         } else {
@@ -57,7 +57,7 @@ GenericVec *clear_vec(GenericVec *vec, size_t item_size) {
 
     if(vec->data) {
         if(vec->copy_deinit) {
-            for(size_t i = 0; i < item_size; i++) {
+            for(size_t i = 0; i < vec->length; i++) {
                 vec->copy_deinit(vec->data + i * item_size);
             }
         } else {

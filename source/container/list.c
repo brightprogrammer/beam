@@ -21,9 +21,9 @@ GenericList *init_list(
         return NULL;
     }
 
+    deinit_list(list, item_size);
     list->copy_init   = copy_init;
     list->copy_deinit = copy_deinit;
-    deinit_list(list, item_size);
 
     return list;
 }
