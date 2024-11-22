@@ -133,13 +133,18 @@ void ServerMain(int connfd, HttpRequest *request) {
         ServeDirectory(&html, path.data, request);
         StringDeinit(&path);
     } else {
-        HtmlAppendFmt(
-            &html,
-            "Beam now hosts it's own code.<br />"
-            "Wanna check it out?</br>"
-            "Visit <a href=\"code.%s\" target=\"_blank\">code.brightprogrammer.in</a>",
-            host->value
-        );
+        if(0 == strcmp(request->url, "/")) {
+            HtmlAppendFmt(
+                &html,
+                "Beam now hosts it's own code.<br />"
+                "Wanna check it out?</br>"
+                "Visit <a href=\"%s://code.%s/\" target=\"_blank\">code.brightprogrammer.in</a>",
+                strstr(host->value, "brightprogrammer") ? "https" : "http",
+                host->value
+            );
+        } else {
+            Wrap404(&html);
+        }
     }
 
     WrapBase(WrapContent(&html));
