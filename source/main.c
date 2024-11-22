@@ -72,6 +72,7 @@ void SendHtmlResponse(Html *html, HttpResponseCode code, int connfd) {
     HttpResponse response = {0};
     HttpResponseInitForHtml(&response, code, html);
     HttpResponseSend(&response, connfd);
+    HttpResponseReset(&response);
 }
 
 ///

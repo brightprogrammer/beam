@@ -83,9 +83,17 @@ DirContents *ReadDirContents(DirContents *dir_contents, const char *path) {
 
     struct dirent *entry = NULL;
     while(NULL != (entry = readdir(dir))) {
+#if __APPLE__
+        size_t namelen = entry->d_namlen;
+#elif __linux__
+        size_t namelen = entry->d_reclen;
+#endif
+
         if('.' == DNAME(0) && 0 == DNAME(1)) {
             continue;
         } else if('.' == DNAME(0) && '.' == DNAME(1) && 0 == DNAME(2)) {
+            continue;
+        } else if(0 == strncmp(entry->d_name, ".git", 4)) {
             continue;
         } else {
             DirEntry direntry = {0};
@@ -115,11 +123,7 @@ DirContents *ReadDirContents(DirContents *dir_contents, const char *path) {
                 default :
                     direntry.type = DIR_ENTRY_TYPE_UNKNOWN;
             }
-#if __APPLE__
-            TempStringFromCStr(&direntry.name, entry->d_name, entry->d_namlen);
-#elif __linux__
-            TempStringFromCStr(&direntry.name, entry->d_name, entry->d_reclen);
-#endif
+            TempStringFromCStr(&direntry.name, entry->d_name, namelen);
             VecPushBack(dir_contents, &direntry);
         }
     }
