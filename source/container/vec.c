@@ -381,9 +381,14 @@ GenericVec *reverse_vec(GenericVec *vec, size_t item_size) {
 }
 
 
-GenericVec *push_arr_vec(GenericVec *vec, size_t item_size, void *arr, size_t count) {
+GenericVec *push_arr_vec(GenericVec *vec, size_t item_size, void *arr, size_t count, size_t pos) {
     if(!vec || !arr || !count || !item_size) {
         LOG_ERROR("invalid arguments.");
+        return NULL;
+    }
+
+    if(pos > vec->length) {
+        LOG_ERROR("vector index out of range.");
         return NULL;
     }
 
@@ -392,15 +397,27 @@ GenericVec *push_arr_vec(GenericVec *vec, size_t item_size, void *arr, size_t co
         return NULL;
     }
 
+    // shift data if being inserted in the middle
+    if(pos < vec->length) {
+        memmove(
+            vec->data + (pos + count) * item_size,
+            vec->data + pos * item_size,
+            count * item_size
+        );
+
+        memset(vec->data + pos * item_size, 0, count * item_size);
+    }
+
+    // insert data
     if(vec->copy_init) {
-        void *data = vec->data + vec->length;
+        void *data = vec->data + pos * item_size;
         while(count--) {
             vec->copy_init(data, arr);
             arr  += item_size;
             data += item_size;
         }
     } else {
-        memcpy(vec->data + vec->length * item_size, arr, count * item_size);
+        memcpy(vec->data + pos * item_size, arr, count * item_size);
     }
 
     vec->length += count;

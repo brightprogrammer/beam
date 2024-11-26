@@ -137,7 +137,7 @@ void ServerMain(int connfd, HttpRequest *request) {
         if(0 == strcmp(request->url, "/")) {
             HtmlAppendFmt(
                 &html,
-                "Beam now hosts it's own code.<br />"
+                "This is a self-hosted website. Beam now hosts it's own code.<br />"
                 "Wanna check it out?</br>"
                 "Visit <a href=\"%s://code.%s/\" target=\"_blank\">code.brightprogrammer.in</a>",
                 strstr(host->value, "brightprogrammer") ? "https" : "http",

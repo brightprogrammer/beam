@@ -257,22 +257,24 @@ String* StringInitFmt(String* str, const char* fmt, ...) __attribute__((format(p
 /// SUCCESS : `str`
 /// FAILURE : NULL
 ///
-#define StringReserve(str, n) VecReserve(v, n)
+#define StringReserve(str, n) VecReserve(str, n)
 
 ///
-/// Push a c-style-string into this string.
+/// Push a array of characters with given length into this string at the given
+/// position.
 ///
 /// str[in,out] : String to insert array chars into.
-/// cstr[in]    : C-style-string to be inserted.
+/// cstr[in]    : array of characters with given length to be inserted.
 /// len [in]    : Number of characters to be appended.
 ///
 /// SUCCESS : `str`
 /// FAILURE : NULL
 ///
-#define StringPushCStr(str, cstr, len) VecPushArr(str, cstr, count)
+#define StringPushCStr(str, cstr, len, pos) VecPushArr((str), (cstr), (count), (pos))
 
 ///
-/// Push a null-terminated string to this string.
+/// Push a null-terminated string to this string
+/// at given position.
 ///
 /// str[in,out] : String to insert array chars into.
 /// zstr[in]    : Null-terminated string to be appended.
@@ -280,7 +282,53 @@ String* StringInitFmt(String* str, const char* fmt, ...) __attribute__((format(p
 /// SUCCESS : `str`
 /// FAILURE : NULL
 ///
-#define StringPushZStr(str, zstr) zstr ? VecPushArr(str, zstr, strlen(zstr)) : NULL;
+#define StringPushZStr(str, zstr, pos) StringPushCStr((str), (zstr), strlen(zstr), (pos))
+
+///
+/// Push an array of chars with given length to the back of this string.
+///
+/// str[in,out] : String to insert array chars into.
+/// cstr[in]    : array of characters with given length to be inserted.
+/// len [in]    : Number of characters to be appended.
+///
+/// SUCCESS : `str`
+/// FAILURE : NULL
+///
+#define StringPushBackCStr(str, cstr, len) VecPushBackArr((str), (cstr), (len))
+
+///
+/// Push a null-terminated string to the back of string.
+///
+/// str[in,out] : String to insert array chars into.
+/// zstr[in]    : Null-terminated string to be appended.
+///
+/// SUCCESS : `str`
+/// FAILURE : NULL
+///
+#define StringPushBackZStr(str, zstr) StringPushBackCStr((str), (zstr), strlen((zstr)))
+
+///
+/// Push a array of characters with given length to the front of this string
+///
+/// str[in,out] : String to insert array chars into.
+/// cstr[in]    : array of characters with given length to be inserted.
+/// len [in]    : Number of characters to be appended.
+///
+/// SUCCESS : `str`
+/// FAILURE : NULL
+///
+#define StringPushFrontCStr(str, cstr, len) VecPushFrontArr((str), (cstr), (len))
+
+///
+/// Push a null-terminated string to the front of this string.
+///
+/// str[in,out] : String to insert array chars into.
+/// zstr[in]    : Null-terminated string to be appended.
+///
+/// SUCCESS : `str`
+/// FAILURE : NULL
+///
+#define StringPushFrontZStr(str, zstr) StringPushFrontCStr((str), (zstr), strlen((zstr)))
 
 ///
 /// Merge two strings and store the result in first string.
@@ -291,7 +339,7 @@ String* StringInitFmt(String* str, const char* fmt, ...) __attribute__((format(p
 /// SUCCESS : `str`
 /// FAILURE : NULL
 ///
-#define StringMerge(str, str2) VecMerge(str, str2)
+#define StringMerge(str, str2) VecMerge((str), (str2))
 
 ///
 /// Reverse contents of this string.
@@ -301,15 +349,15 @@ String* StringInitFmt(String* str, const char* fmt, ...) __attribute__((format(p
 /// SUCCESS : `str`
 /// FAILURE : NULL
 ///
-#define StringReverse(str) VecReverse(str)
+#define StringReverse(str) VecReverse((str))
 
-#define StringForeach(str, chr, iter) VecForeach(str, chr, iter)
+#define StringForeach(str, chr, iter) VecForeach((str), (chr), (iter))
 
-#define StrForeachReverse(str, chr, iter) VecForeachReverse(str, chr, iter)
+#define StrForeachReverse(str, chr, iter) VecForeachReverse((str), (chr), (iter))
 
-#define StrForeachPtr(str, chrptr, iter) VecForeachPtr(str, chrptr, iter)
+#define StrForeachPtr(str, chrptr, iter) VecForeachPtr((str), (chrptr), (iter))
 
-#define StrForeachPtrReverse(str, chrptr, iter) VecForeachPtrReverse(str, chrptr, iter)
+#define StrForeachPtrReverse(str, chrptr, iter) VecForeachPtrReverse((str), (chrptr), iter)
 
 String* StringInitCopy(String* dst, String* src);
 String* StringDeinitCopy(String* copy);

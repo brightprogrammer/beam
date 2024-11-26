@@ -375,8 +375,33 @@ typedef struct {
 /// SUCCESS : `v`
 /// FAILURE : NULL
 ///
-#define VecPushArr(v, arr, count)                                                                  \
-    ((__typeof__(v))push_arr_vec(GENERIC_VEC(v), sizeof((v)->data[0]), (arr), (count)))
+#define VecPushArr(v, arr, count, pos)                                                             \
+    ((__typeof__(v)                                                                                \
+    )push_arr_vec(GENERIC_VEC(v), sizeof((v)->data[0]), (void *)(arr), (count), (pos)))
+
+///
+/// Push a complete array into this vector.
+///
+/// v[in,out] : Vector to insert array items into.
+/// arr[in]   : Array to be inserted.
+/// count[in] : Number (non-zero) of items in array.
+///
+/// SUCCESS : `v`
+/// FAILURE : NULL
+///
+#define VecPushBackArr(v, arr, count) VecPushArr((v), (arr), (count), (v)->length)
+
+///
+/// Push a complete array into this vector.
+///
+/// v[in,out] : Vector to insert array items into.
+/// arr[in]   : Array to be inserted.
+/// count[in] : Number (non-zero) of items in array.
+///
+/// SUCCESS : `v`
+/// FAILURE : NULL
+///
+#define VecPushFrontArr(v, arr, count) VecPushArr((v), (arr), (count), 0)
 
 ///
 /// Merge two vectors and store the result in first vector.
@@ -387,7 +412,7 @@ typedef struct {
 /// SUCCESS : `v`
 /// FAILURE : NULL
 ///
-#define VecMerge(v, v2) VecPushArr((v), (v2)->data, (v2)->length)
+#define VecMerge(v, v2) VecPushBackArr((v), (v2)->data, (v2)->length)
 
 ///
 /// Reverse contents of this vector.
@@ -449,7 +474,7 @@ GenericVec *fast_remove_range_vec(
 GenericVec *qsort_vec(GenericVec *vec, size_t item_size, int (*comp)(const void *, const void *));
 GenericVec *swap_vec(GenericVec *vec, size_t item_size, size_t idx1, size_t idx2);
 GenericVec *reverse_vec(GenericVec *vec, size_t item_size);
-GenericVec *push_arr_vec(GenericVec *vec, size_t item_size, void *arr, size_t count);
+GenericVec *push_arr_vec(GenericVec *vec, size_t item_size, void *arr, size_t count, size_t pos);
 GenericVec *resize_vec(GenericVec *vec, size_t item_size, size_t new_size);
 
 #endif // BEAM_CONTAINER_VEC_H
