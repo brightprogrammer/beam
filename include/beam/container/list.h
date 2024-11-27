@@ -15,15 +15,11 @@
 
 typedef struct __attribute__((packed)) GenericListNode GenericListNode;
 
-struct __attribute__((packed)) GenericListNode {
+struct GenericListNode {
     GenericListNode *next;
     GenericListNode *prev;
+    void            *data;
 };
-
-///
-/// Get pointer to data inside a generic node.
-///
-#define GENERIC_LIST_NODE_DATA_PTR(node) ((void *)((char *)(node) + 2 * sizeof(GenericListNode *)))
 
 typedef struct {
     GenericListNode  *head;
@@ -47,16 +43,16 @@ typedef struct {
 /// Doubly-linked list
 ///
 #define ListNode(T)                                                                                \
-    struct __attribute__((packed)) {                                                               \
+    struct {                                                                                       \
         GenericListNode *next;                                                                     \
         GenericListNode *prev;                                                                     \
-        T                data;                                                                     \
+        T               *data;                                                                     \
     }
 
 ///
 /// Get data type stored by this list
 ///
-#define LIST_DATA_TYPE(list) __typeof__((list)->head->data)
+#define LIST_DATA_TYPE(list) __typeof__(*((list)->head->data))
 
 ///
 /// Get node type stored by this list
@@ -66,7 +62,7 @@ typedef struct {
 ///
 /// Get item after given list item
 ///
-#define ListItemNext(item) ((__typeof__(item))((item) ? (item)->next : NULL))
+#define ListNodeNext(item) ((__typeof__(item))((item) ? (item)->next : NULL))
 
 ///
 /// Single linked list

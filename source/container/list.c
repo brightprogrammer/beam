@@ -47,11 +47,12 @@ GenericList *insert_into_list(GenericList *list, void *item_data, size_t item_si
         return NULL;
     }
 
-    GenericListNode *new_node = malloc(sizeof(GenericListNode) + item_size);
+    GenericListNode *new_node = calloc(sizeof(GenericListNode), 1);
     if(!new_node) {
         LOG_ERROR("malloc() failed : %s.", strerror(errno));
         return NULL;
     }
+    new_node->data = calloc(item_size, 1);
 
     if(idx < list->length) {
         // get node after which insertion will take place
@@ -70,10 +71,10 @@ GenericList *insert_into_list(GenericList *list, void *item_data, size_t item_si
 
         // insert data new data into current node
         if(list->copy_init) {
-            memset(GENERIC_LIST_NODE_DATA_PTR(new_node), 0, item_size);
-            list->copy_init(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data);
+            memset(new_node->data, 0, item_size);
+            list->copy_init(new_node->data, item_data);
         } else {
-            memcpy(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data, item_size);
+            memcpy(new_node->data, item_data, item_size);
         }
     } else if(idx == list->length) {
         GenericListNode *new_tail = new_node;
@@ -96,10 +97,10 @@ GenericList *insert_into_list(GenericList *list, void *item_data, size_t item_si
         new_tail->next = NULL;
 
         if(list->copy_init) {
-            memset(GENERIC_LIST_NODE_DATA_PTR(new_node), 0, item_size);
-            list->copy_init(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data);
+            memset(new_node->data, 0, item_size);
+            list->copy_init(new_node->data, item_data);
         } else {
-            memcpy(GENERIC_LIST_NODE_DATA_PTR(new_node), item_data, item_size);
+            memcpy(new_node->data, item_data, item_size);
         }
     } else {
         LOG_ERROR("list index out of range.");
@@ -136,7 +137,12 @@ GenericList *remove_range_list(
     if(removed_data) {
         GenericListNode *node = node_at_list(list, item_size, start);
         for(size_t c = 0; (c < count) && node; c++) {
-            memcpy(removed_data + c * item_size, GENERIC_LIST_NODE_DATA_PTR(node), item_size);
+            memcpy(removed_data + c * item_size, node->data, item_size);
+
+            memset(node->data, 0, item_size);
+            free(node->data);
+            node->data = NULL;
+
             node = node->next;
         }
     } else {
@@ -144,11 +150,14 @@ GenericList *remove_range_list(
         GenericListNode *node = node_at_list(list, item_size, start);
         for(size_t c = 0; (c < count) && node; c++) {
             if(list->copy_deinit) {
-                list->copy_deinit(GENERIC_LIST_NODE_DATA_PTR(node));
+                list->copy_deinit(node->data);
             } else {
-                memset(GENERIC_LIST_NODE_DATA_PTR(node), 0, item_size);
+                memset(node->data, 0, item_size);
             }
-            node = node->next;
+
+            free(node->data);
+            node->data = NULL;
+            node       = node->next;
         }
     }
 
@@ -219,8 +228,8 @@ GenericList *swap_list(GenericList *list, size_t item_size, size_t idx1, size_t 
     }
 
     unsigned char *a, *b, tmp;
-    a = GENERIC_LIST_NODE_DATA_PTR(n1);
-    b = GENERIC_LIST_NODE_DATA_PTR(n2);
+    a = n1->data;
+    b = n2->data;
     while(item_size--) {
         tmp = *a;
         *a  = *b;
@@ -271,9 +280,9 @@ GenericList *push_arr_list(GenericList *list, size_t item_size, void *arr, size_
 
         // insert data
         if(list->copy_init) {
-            list->copy_init(GENERIC_LIST_NODE_DATA_PTR(new_tail), arr);
+            list->copy_init(new_tail->data, arr);
         } else {
-            memcpy(GENERIC_LIST_NODE_DATA_PTR(new_tail), arr, item_size);
+            memcpy(new_tail->data, arr, item_size);
         }
 
         arr += item_size;
@@ -291,7 +300,7 @@ GenericList *merge_list(GenericList *list1, size_t item_size, GenericList *list2
 
     GenericListNode *node = list2->head;
     while(node) {
-        if(!insert_into_list(list1, GENERIC_LIST_NODE_DATA_PTR(node), item_size, list1->length)) {
+        if(!insert_into_list(list1, node->data, item_size, list1->length)) {
             LOG_ERROR("failed into insert into list.");
             return NULL;
         }
@@ -345,5 +354,5 @@ void *item_ptr_at_list(GenericList *list, size_t item_size, size_t idx) {
     }
 
     GenericListNode *node = node_at_list(list, item_size, idx);
-    return GENERIC_LIST_NODE_DATA_PTR(node);
+    return node->data;
 }
