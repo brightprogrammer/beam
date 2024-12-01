@@ -8,6 +8,7 @@
 #define BEAM_LOG_H
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <errno.h>
 
@@ -25,6 +26,19 @@ typedef enum {
     LOG_MESSAGE_TYPE_ERROR,
     LOG_MESSAGE_TYPE_INFO
 } LogMessageType;
+
+///
+/// Initialize logging engine.
+///
+/// redirect[in] : Whether or not to redirect logs to a file
+///                inside /tmp directory
+///
+void LogInit(bool redirect);
+
+///
+/// Shutdown logging engine.
+///
+void LogDeinit();
 
 ///
 /// Generate the log message

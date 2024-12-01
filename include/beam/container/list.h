@@ -301,28 +301,28 @@ typedef struct {
     (iter) = 0;                                                                                    \
     if((l) && (l)->length > 0)                                                                     \
         for(GenericListNode *__node = GENERIC_LIST_NODE((l)->head);                                \
-            __node != NULL && (((var) = ((LIST_NODE_TYPE(l) *)__node)->data), 1);                  \
+            __node != NULL && (((var) = *(LIST_DATA_TYPE(l) *)((__node)->data)), 1);               \
             ++(iter), __node = __node->next)
 
 #define ListForeachReverse(l, var, iter)                                                           \
     (iter) = 0;                                                                                    \
     if((l) && (l)->length > 0)                                                                     \
         for(GenericListNode *__node = GENERIC_LIST_NODE((l)->tail);                                \
-            __node != NULL && (((var) = ((LIST_NODE_TYPE(l) *)__node)->data), 1);                  \
+            __node != NULL && (((var) = *(LIST_DATA_TYPE(l) *)((__node)->data)), 1);               \
             ++(iter), __node = __node->prev)
 
 #define ListForeachPtr(l, var, iter)                                                               \
     (iter) = 0;                                                                                    \
     if((l) && (l)->length > 0)                                                                     \
         for(GenericListNode *__node = GENERIC_LIST_NODE((l)->head);                                \
-            __node != NULL && (((var) = GENERIC_LIST_NODE_DATA_PTR(__node)), 1);                   \
+            __node != NULL && (((var) = (LIST_DATA_TYPE(l) *)((__node)->data)), 1);                \
             ++(iter), __node = __node->next)
 
 #define ListForeachPtrReverse(l, var, iter)                                                        \
     (iter) = 0;                                                                                    \
     if((l) && (l)->length > 0)                                                                     \
         for(GenericListNode *__node = GENERIC_LIST_NODE((l)->tail);                                \
-            __node != NULL && (((var) = GENERIC_LIST_NODE_DATA_PTR(__node)), 1);                   \
+            __node != NULL && (((var) = (LIST_DATA_TYPE(l) *)((__node)->data)), 1);                \
             ++(iter), __node = __node->prev)
 
 GenericList *init_list(
@@ -340,8 +340,7 @@ GenericList *remove_range_list(
     size_t       start,
     size_t       count
 );
-GenericList *
-    qsort_list(GenericList *list, size_t item_size, int (*comp)(const void *, const void *));
+GenericList     *qsort_list(GenericList *list, size_t item_size, GenericCompare comp);
 GenericList     *swap_list(GenericList *list, size_t item_size, size_t idx1, size_t idx2);
 GenericList     *reverse_list(GenericList *list, size_t item_size);
 GenericList     *push_arr_list(GenericList *list, size_t item_size, void *arr, size_t count);

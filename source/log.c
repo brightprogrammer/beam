@@ -18,37 +18,43 @@ static pthread_mutex_t lock     = PTHREAD_MUTEX_INITIALIZER;
 #define LOCK()   pthread_mutex_lock(&lock);
 #define UNLOCK() pthread_mutex_unlock(&lock);
 
-__attribute__((constructor)) static void LogInit() {
-    // Get the current time
-    time_t     raw_time;
-    struct tm *time_info;
-    char       time_buffer[20] = {0};
+void LogInit(bool redirect) {
+    if(redirect) {
+        // Get the current time
+        time_t     raw_time;
+        struct tm *time_info;
+        char       time_buffer[20] = {0};
 
-    time(&raw_time);
-    time_info = localtime(&raw_time);
-    strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H-%M-%S", time_info);
+        time(&raw_time);
+        time_info = localtime(&raw_time);
+        strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H-%M-%S", time_info);
 
-    // generate log file name
-    char file_name[128] = {0};
-    snprintf(file_name, 127, "/tmp/beam-%s", time_buffer);
-    printf("storing logs in %s\n", file_name);
+        // generate log file name
+        char file_name[128] = {0};
+        snprintf(file_name, 127, "/tmp/beam-%s", time_buffer);
+        printf("storing logs in %s\n", file_name);
 
-    // Open the file for writing (create if it doesn't exist, overwrite if it does)
-    stderror = freopen(file_name, "w", stderr);
+        // Open the file for writing (create if it doesn't exist, overwrite if it does)
+        stderror = freopen(file_name, "w", stderr);
 
-    if(stderror == NULL) {
-        printf("error opening file : %s\n", strerror(errno));
-        return;
+        if(stderror == NULL) {
+            printf("error opening file : %s\n", strerror(errno));
+            return;
+        }
+
+        setbuf(stderror, 0);
+    } else {
+        setbuf(stderr, 0);
     }
-
-    setbuf(stderror, 0);
 }
 
-__attribute__((destructor)) static void LogDeinit() {
+
+void LogDeinit() {
     if(stderror) {
         fclose(stderror);
     }
 }
+
 
 void LogWrite(LogMessageType type, const char *tag, int line, const char *format, ...) {
     if(!tag || !format) {

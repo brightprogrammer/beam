@@ -17,5 +17,6 @@
 
 typedef void *(*GenericCopyInit)(void *dst, void *src);
 typedef void *(*GenericCopyDeinit)(void *copy);
+typedef int (*GenericCompare)(const void *first, const void *second);
 
 #endif // BEAM_CONTAINERS_COMMON_H

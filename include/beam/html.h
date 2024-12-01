@@ -13,99 +13,71 @@
 #include <beam/container/list.h>
 #include <beam/container/string.h>
 
-typedef struct HtmlComponent HtmlComponent;
-typedef HtmlComponent *(*HtmlComponentRender)(HtmlComponent *component, void *user_data);
-
-struct HtmlComponent {
-    ///
-    /// Set to true when something in this component is changed and requires
-    /// a re-rendering
-    ///
-    bool is_changed;
-
-    ///
-    /// This html component's render function. Can be used to re-render
-    /// this component as well.
-    /// If no render method is provided then is_changed and user_data field
-    /// is useless and is not used.
-    ///
-    HtmlComponentRender render;
-
-    ///
-    /// User callback data to be passed to render method.
-    ///
-    void *user_data;
-
-    ///
-    /// Html component's string data.
-    ///
-    String data;
-};
-
-HtmlComponent *HtmlComponentInitCopy(HtmlComponent *dst, HtmlComponent *src);
-HtmlComponent *HtmlComponentDeinitCopy(HtmlComponent *copy);
-
 ///
-/// Initialize a new html component with given parameters.
+/// Html is made of smaller html components
+/// Basically a list of strings
 ///
-/// component[in,out] : Html component to be initialized.
-/// render[in]        : Method to be used to (re)render this component.
-/// user_data[in]     : User callback data to be passed to `render` method.
-///
-/// SUCCESS : `component`
-/// FAILURE : NULL
-///
-HtmlComponent *
-    HtmlComponentInit(HtmlComponent *component, HtmlComponentRender render, void *user_data);
+typedef List(String) Html;
 
 ///
 /// Initialize given html object with contents of file at given path.
 /// Resets the given html object and stores content in it.
 ///
-/// component[in,out] : Html component to be inited.
-/// filepath[in]      : Path where file to be loaded is present.
+/// html[in,out] : Html to be inited.
+/// filepath[in] : Path where file to be loaded is present.
 ///
 /// SUCCESS : `html`
 /// FAILURE : NULL
 ///
-HtmlComponent *HtmlComponentInitFromFile(HtmlComponent *component, const char *filepath);
+Html *HtmlInitFromFile(Html *html, const char *filepath);
 
 ///
 /// Html load from ZString
 /// Resets the given html object and stores msg in it.
 ///
-/// component[in,out] : Html component to be inited.
-/// zstr[in]          : Null-terminated string to be stored in html.
-///
-/// SUCCESS : `component`
-/// FAILURE : NULL
-///
-HtmlComponent *HtmlComponentInitFromZStr(HtmlComponent *component, const char *zstr);
-
-///
-/// Wrap given html component with `before_zstr` and `after_zstr`.
-///
-/// component[in,out] : Html component to be wrapped.
-/// before_zstr[in]   : Content to be pushed in the front of provided html.
-/// after_zstr[in]    : Content to be pushed after the provided html.
-///
-/// SUCCESS : `component` wrapped in between `before_zstr` <html> `after_zstr`
-/// FAILURE : NULL
-///
-HtmlComponent *
-    HtmlComponentWrap(HtmlComponent *component, const char *before_zstr, const char *after_zstr);
-
-///
-/// Append given string to given html.
-///
-/// component[in,out] : Html to append string into.
-/// zstr[in]          : Content to be pushed into html
-/// len[in]           : Length of given string.
+/// html[in,out] : Html to be inited.
+/// msg[in]      : Null-terminated string to be stored in html.
 ///
 /// SUCCESS : `html`
 /// FAILURE : NULL
 ///
-HtmlComponent *HtmlComponentAppendCStr(HtmlComponent *component, const char *cstr, size_t len);
+Html *HtmlInitFromZStr(Html *html, const char *msg);
+
+///
+/// Wrap given html with `before_zstr` and `after_zstr`.
+///
+/// html[in,out]    : Html to be wrapped.
+/// before_zstr[in] : Content to be pushed in the front of provided html.
+/// after_zstr[in]  : Content to be pushed after the provided html.
+///
+/// SUCCESS : `html` wrapped in between `before_zst` <html> `after_zstr`
+/// FAILURE : NULL
+///
+Html *HtmlWrap(Html *html, const char *before_zstr, const char *after_zstr);
+
+///
+/// Append given string to given html.
+///
+/// html[in,out] : Html to append string into.
+/// zstr[in]     : Content to be pushed into html
+/// len[in]      : Length of given string.
+///
+/// SUCCESS : `html`
+/// FAILURE : NULL
+///
+Html *HtmlAppendCStr(Html *html, const char *cstr, size_t len);
+
+///
+/// Prepend given string to given html.
+///
+/// html[in,out] : Html to append string into.
+/// zstr[in]     : Content to be pushed into html
+/// len[in]      : Length of given string.
+///
+/// SUCCESS : `html`
+/// FAILURE : NULL
+///
+Html *HtmlPrependCStr(Html *html, const char *cstr, size_t len);
 
 ///
 /// Append given null-terminated string to given html.
@@ -114,36 +86,22 @@ HtmlComponent *HtmlComponentAppendCStr(HtmlComponent *component, const char *cst
 /// zstr[in]     : Content to be pushed into html
 /// len[in]      : Length of given string.
 ///
-/// SUCCESS : `component`
+/// SUCCESS : `html`
 /// FAILURE : NULL
 ///
-#define HtmlComponentAppendZStr(html, zstr) HtmlAppendCStr((html), (zstr), strlen((zstr)))
+#define HtmlAppendZStr(html, zstr) HtmlAppendCStr((html), (zstr), strlen((zstr)))
 
-
 ///
-/// Prepend given string to given html component.
+/// Prepend given null-terminated string to given html.
 ///
-/// component[in,out] : Html to append string into.
-/// zstr[in]          : Content to be pushed into html
-/// len[in]           : Length of given string.
+/// html[in,out] : Html to append string into.
+/// zstr[in]     : Content to be pushed into html
+/// len[in]      : Length of given string.
 ///
-/// SUCCESS : `component`
+/// SUCCESS : `html`
 /// FAILURE : NULL
 ///
-HtmlComponent *HtmlComponentPrependCStr(HtmlComponent *component, const char *cstr, size_t len);
-
-///
-/// Prepend given null-terminated string to given html component.
-///
-/// component[in,out] : Html to append string into.
-/// zstr[in]          : Content to be pushed into html
-/// len[in]           : Length of given string.
-///
-/// SUCCESS : `component`
-/// FAILURE : NULL
-///
-#define HtmlComponentPrependZStr(component, zstr)                                                  \
-    HtmlComponentPrependCStr((component), (zstr), strlen((zstr)))
+#define HtmlPrependZStr(html, zstr) HtmlPrependCStr((html), (zstr), strlen((zstr)))
 
 ///
 /// Append a formatted string to given html.
@@ -154,9 +112,7 @@ HtmlComponent *HtmlComponentPrependCStr(HtmlComponent *component, const char *cs
 /// SUCCESS : `html`
 /// FAILURE : NULL
 ///
-HtmlComponent *HtmlComponentAppendFmt(HtmlComponent *component, const char *fmt, ...)
-    __attribute__((format(printf, 2, 3)));
-
+Html *HtmlAppendFmt(Html *html, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 
 ///
 /// Prepend a formatted string to given html.
@@ -167,23 +123,7 @@ HtmlComponent *HtmlComponentAppendFmt(HtmlComponent *component, const char *fmt,
 /// SUCCESS : `html`
 /// FAILURE : NULL
 ///
-HtmlComponent *HtmlComponentPrependFmt(HtmlComponent *component, const char *fmt, ...)
-    __attribute__((format(printf, 2, 3)));
-
-///
-/// Html is made of smaller html components
-///
-typedef Vec(HtmlComponent) Html;
-
-///
-/// Initialize given html object with default parameters.
-///
-/// html[in,out] : Html to be initialized.
-///
-/// SUCCESS : `html`
-/// FAILURE : NULL
-///
-Html *HtmlInit(Html *html);
+Html *HtmlPrependFmt(Html *html, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 
 ///
 /// Get complete size of html file by summing up all the components.

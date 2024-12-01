@@ -283,7 +283,7 @@ typedef struct {
 /// FAILURE : Returns NULL otherwise.
 ///
 #define VecSort(v, compare)                                                                        \
-    ((__typeof__(v))qsort_vec(GENERIC_VEC(v), sizeof((v)->data[0]), (compare)))
+    ((__typeof__(v))qsort_vec(GENERIC_VEC(v), sizeof((v)->data[0]), (GenericCompare)(compare)))
 
 ///
 /// Try reducing memory footprint of vector.
@@ -471,7 +471,7 @@ GenericVec *fast_remove_range_vec(
     size_t      start,
     size_t      count
 );
-GenericVec *qsort_vec(GenericVec *vec, size_t item_size, int (*comp)(const void *, const void *));
+GenericVec *qsort_vec(GenericVec *vec, size_t item_size, GenericCompare comp);
 GenericVec *swap_vec(GenericVec *vec, size_t item_size, size_t idx1, size_t idx2);
 GenericVec *reverse_vec(GenericVec *vec, size_t item_size);
 GenericVec *push_arr_vec(GenericVec *vec, size_t item_size, void *arr, size_t count, size_t pos);

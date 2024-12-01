@@ -11,174 +11,100 @@
 #include <beam/log.h>
 #include <beam/file.h>
 
-HtmlComponent *HtmlComponentInitCopy(HtmlComponent *dst, HtmlComponent *src) {
-    if(!dst || !src) {
-        LOG_ERROR("invalid arguments");
-        return NULL;
-    }
-
-    if(!StringInitCopy(&dst->data, &src->data)) {
-        LOG_ERROR("failed to create string copy.");
-        return NULL;
-    }
-
-    dst->render     = src->render;
-    dst->user_data  = src->user_data;
-    dst->is_changed = src->is_changed;
-
-    return dst;
-}
-
-
-HtmlComponent *HtmlComponentDeinitCopy(HtmlComponent *copy) {
-    if(!copy) {
+Html *HtmlInitFromFile(Html *html, const char *filepath) {
+    if(!html || !filepath) {
         LOG_ERROR("invalid arguments.");
         return NULL;
     }
 
-    StringDeinitCopy(&copy->data);
-    memset(copy, 0, sizeof(HtmlComponent));
+    // temporarily remove copyier
+    // so data is not re-duplicated
+    GenericCopyInit copier = html->copy_init;
+    html->copy_init        = NULL;
 
-    return copy;
-}
-
-
-HtmlComponent *
-    HtmlComponentInit(HtmlComponent *component, HtmlComponentRender render, void *user_data) {
-    if(!component) {
-        LOG_ERROR("invalid arguments.");
-        return NULL;
-    }
-
-    HtmlComponentDeinitCopy(component);
-
-    // try to render for the first time
-    if(!render(component, user_data)) {
-        LOG_ERROR("html component render failed.");
-        return NULL;
-    }
-
-    component->render     = render;
-    component->user_data  = user_data;
-    component->is_changed = false;
-
-    return component;
-}
-
-
-HtmlComponent *HtmlInitFromFile(HtmlComponent *component, const char *filepath) {
-    if(!component || !filepath) {
-        LOG_ERROR("invalid arguments.");
-        return NULL;
-    }
-
-    // components initialized like don't have to re-render
-    // so is_changed, render and user_data fields are redundant.
-    HtmlComponentDeinitCopy(component);
-
-    // read whole file into component data
-    if(!ReadCompleteFile(
-           filepath,
-           (void **)&component->data.data,
-           &component->data.length,
-           &component->data.capacity
-       )) {
+    String str = {0};
+    if(!ReadCompleteFile(filepath, (void **)&str.data, &str.length, &str.capacity)) {
         LOG_ERROR("failed to read file.");
+        html->copy_init = copier;
         return NULL;
     }
 
-    return component;
+    // when inserted it'll just be memcopied
+    ListPushBack(html, &str);
+
+    // switch it up!
+    html->copy_init = copier;
+    return html;
 }
 
 
-HtmlComponent *HtmlComponentInitFromZStr(HtmlComponent *component, const char *zstr) {
-    if(!component || !zstr) {
+Html *HtmlInitFromZStr(Html *html, const char *msg) {
+    if(!html || !msg) {
         LOG_ERROR("invalid arguments.");
         return NULL;
     }
 
-    // components initialized like don't have to re-render
-    // so is_changed, render and user_data fields are redundant.
-    HtmlComponentDeinitCopy(component);
+    // remove any previous data
+    ListInit(html, StringInitCopy, StringDeinitCopy);
 
-    StringPushBackZStr(&component->data, zstr);
+    String str;
+    TempStringFromZStr(&str, msg);
+    ListPushBack(html, &str);
+    memset(&str, 0, sizeof(String));
 
-
-    return component;
+    return html;
 }
 
 
-HtmlComponent *
-    HtmlComponentWrap(HtmlComponent *component, const char *before_zstr, const char *after_zstr) {
-    if(!component || !before_zstr || !after_zstr) {
+Html *HtmlWrap(Html *html, const char *before_zstr, const char *after_zstr) {
+    if(!html || !before_zstr || !after_zstr) {
         LOG_ERROR("inalid arguments");
         return NULL;
     }
 
-    StringPushFrontZStr(&component->data, before_zstr);
-    StringPushFrontZStr(&component->data, after_zstr);
+    String data[2];
+    TempStringFromZStr(data, before_zstr);
+    TempStringFromZStr(data + 1, after_zstr);
+    ListPushFront(html, data);
+    ListPushBack(html, data + 1);
+    memset(data, 0, sizeof(data));
 
-    return component;
+    return html;
 }
 
 
-HtmlComponent *HtmlAppendCStr(HtmlComponent *component, const char *cstr, size_t len) {
-    if(!component || !cstr || !len) {
+Html *HtmlAppendCStr(Html *html, const char *cstr, size_t len) {
+    if(!html || !cstr || !len) {
         LOG_ERROR("invalid arguments");
         return NULL;
     }
 
-    StringPushBackCStr(&component->data, cstr, len);
+    String str = {0};
+    TempStringFromCStr(&str, cstr, len);
+    ListPushBack(html, &str);
+    memset(&str, 0, sizeof(String));
 
-    return component;
+    return html;
 }
 
 
-HtmlComponent *HtmlPrependCStr(HtmlComponent *component, const char *cstr, size_t len) {
-    if(!component || !cstr || !len) {
+Html *HtmlPrependCStr(Html *html, const char *cstr, size_t len) {
+    if(!html || !cstr || !len) {
         LOG_ERROR("invalid arguments");
         return NULL;
     }
 
-    StringPushFrontCStr(&component->data, cstr, len);
+    String str = {0};
+    TempStringFromCStr(&str, cstr, len);
+    ListPushFront(html, &str);
+    memset(&str, 0, sizeof(String));
 
-    return component;
+    return html;
 }
 
 
-HtmlComponent *HtmlComponentAppendFmt(HtmlComponent *component, const char *fmt, ...) {
-    if(!component || !fmt) {
-        LOG_ERROR("invalid arguments");
-        return NULL;
-    }
-
-    va_list args;
-    va_list args_copy;
-    va_start(args, fmt);
-    va_copy(args_copy, args);
-
-    size_t n    = vsnprintf(NULL, 0, fmt, args);
-    char  *data = malloc(n + 1);
-    if(!data) {
-        LOG_ERROR("malloc() failed : %s.", strerror(errno));
-        return NULL;
-    }
-    data[n] = 0;
-
-    vsnprintf(data, n + 1, fmt, args_copy);
-    StringPushBackCStr(&component->data, data, n);
-    memset(data, 0, n + 1);
-    free(data);
-
-    va_end(args_copy);
-    va_end(args);
-
-    return component;
-}
-
-
-HtmlComponent *HtmlComponentPrependFmt(HtmlComponent *component, const char *fmt, ...) {
-    if(!component || !fmt) {
+Html *HtmlAppendFmt(Html *html, const char *fmt, ...) {
+    if(!html || !fmt) {
         LOG_ERROR("invalid arguments");
         return NULL;
     }
@@ -197,24 +123,43 @@ HtmlComponent *HtmlComponentPrependFmt(HtmlComponent *component, const char *fmt
     data[n] = 0;
 
     vsnprintf(data, n + 1, fmt, args_copy);
-    StringPushFrontCStr(&component->data, data, n);
+    HtmlAppendCStr(html, data, n);
     memset(data, 0, n + 1);
     free(data);
 
     va_end(args_copy);
     va_end(args);
 
-    return component;
+    return html;
 }
 
 
-Html *HtmlInit(Html *html) {
-    if(!html) {
+Html *HtmlPrependFmt(Html *html, const char *fmt, ...) {
+    if(!html || !fmt) {
         LOG_ERROR("invalid arguments");
         return NULL;
     }
 
-    VecInit(html, HtmlComponentInitCopy, HtmlComponentDeinitCopy);
+    va_list args;
+    va_list args_copy;
+    va_start(args, fmt);
+    va_copy(args_copy, args);
+
+    size_t n    = vsnprintf(NULL, 0, fmt, args);
+    char  *data = malloc(n + 1);
+    if(!data) {
+        LOG_ERROR("malloc() failed : %s.", strerror(errno));
+        return NULL;
+    }
+    data[n] = 0;
+
+    vsnprintf(data, n + 1, fmt, args_copy);
+    HtmlPrependCStr(html, data, n);
+    memset(data, 0, n + 1);
+    free(data);
+
+    va_end(args_copy);
+    va_end(args);
 
     return html;
 }
@@ -226,11 +171,11 @@ size_t HtmlGetCompleteSize(Html *html) {
         return 0;
     }
 
-    size_t         total_size = 0;
-    HtmlComponent *component;
-    size_t         iter;
-    VecForeachPtr(html, component, iter) {
-        total_size += component->data.length;
+    size_t  total_size = 0;
+    String *str;
+    size_t  iter;
+    ListForeachPtr(html, str, iter) {
+        total_size += str->length;
     }
 
     return total_size;

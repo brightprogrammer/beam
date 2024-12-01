@@ -154,6 +154,8 @@ void ServerMain(int connfd, HttpRequest *request) {
 }
 
 int main() {
+    LogInit(true);
+
     // create main socket that the server listens on
     int sockfd = socket(AF_INET6, SOCK_STREAM, 0);
     if(-1 == sockfd) {

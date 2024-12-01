@@ -325,13 +325,13 @@ GenericVec *fast_remove_range_vec(
 }
 
 
-GenericVec *qsort_vec(GenericVec *vec, size_t item_size, int (*comp)(const void *, const void *)) {
+GenericVec *qsort_vec(GenericVec *vec, size_t item_size, GenericCompare comp) {
     if(!vec || !item_size) {
         LOG_ERROR("invalid arguments.");
         return NULL;
     }
 
-    qsort(vec->data, vec->length, sizeof(vec->data[0]), comp);
+    qsort(vec->data, vec->length, item_size, comp);
 
     return vec;
 }

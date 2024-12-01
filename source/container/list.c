@@ -187,8 +187,7 @@ GenericList *remove_range_list(
 }
 
 
-GenericList *
-    qsort_list(GenericList *list, size_t item_size, int (*comp)(const void *, const void *)) {
+GenericList *qsort_list(GenericList *list, size_t item_size, GenericCompare comp) {
     if(!list || !item_size) {
         LOG_ERROR("invalid arguments.");
         return NULL;

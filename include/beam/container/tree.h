@@ -52,7 +52,7 @@ typedef struct {
         TreeNode(T) * root;                                                                        \
         size_t            height;                                                                  \
         GenericCopyInit   copy_init;                                                               \
-        GenericCopyDeinit copy_deinit                                                              \
+        GenericCopyDeinit copy_deinit;                                                             \
     }
 
 ///

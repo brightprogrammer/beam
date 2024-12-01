@@ -4,11 +4,11 @@
 #include <beam/html.h>
 #include <beam/file.h>
 
-HtmlComponent* RenderFileContent(Html* html, const char* filepath);
-HtmlComponent* Render404(Html* html, void*);
-HtmlComponent* RenderDirEntryInTable(Html* html, DirEntry* entry);
-HtmlComponent* RenderDirContents(Html* html, DirContents* dir_contents);
-HtmlComponent* RenderContent(Html* html, void*);
-HtmlComponent* RenderBase(Html* html, void*);
+Html* WrapFileContent(Html* html, const char* filepath);
+Html* Wrap404(Html* html);
+Html* WrapDirEntryInTable(Html* html, DirEntry* entry);
+Html* WrapDirContents(Html* html, DirContents* dir_contents);
+Html* WrapContent(Html* html);
+Html* WrapBase(Html* html);
 
 #endif // BEAM_FRONTEND_H
