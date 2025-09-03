@@ -4,6 +4,7 @@
 
 #include <Misra.h>
 #include <Beam/Http.h>
+#include "Misra/Sys.h"
 
 #define PORT 3000
 
@@ -50,7 +51,7 @@ void SendInternalServerErrorResponse(const char *msg, int connfd) {
 /// connfd[in] : Connection socket file descriptor.
 ///
 void RespondWithHtml(Str *html, HttpResponseCode code, int connfd) {
-    if(!html || connfd < 0) {
+    if (!html || connfd < 0) {
         LOG_ERROR("Invalid html or connection");
         SendInternalServerErrorResponse(NULL, connfd);
         return;
@@ -68,18 +69,47 @@ void ServerMain(int connfd, HttpRequest *request) {
     StrDeinit(&html);
 }
 
+// int main(int argc, char *argv[]) {
+//     if(argc < 2) {
+//         fprintf(stderr, "Usage: %s <input_file>\n", argv[0]);
+//         return 1;
+//     }
+
+//     Str file = StrInit();
+//     StrResize(&file, SysGetFileSize(argv[0]));
+
+//     FILE *fp = fopen(argv[1], "rb");
+//     if(!fp) {
+//         perror("Error opening file");
+//         return 1;
+//     }
+
+//     fread(file.data, 1, file.length, fp);
+//     fclose(fp);
+
+//     // input is now populated with file contents
+//     HttpRequest req = HttpRequestInit();
+//     HttpRequestParse(&req, file.data);
+//     WriteFmtLn("Method = {} Url = {}", req.method, req.url);
+//     VecForeachPtr(&req.headers, header, { WriteFmtLn("{} = {}", header->key, header->value); });
+//     HttpRequestDeinit(&req);
+
+//     StrDeinit(&file);
+// }
+
+
 int main() {
     LogInit(true);
 
     // create main socket that the server listens on
     i32 sockfd = socket(AF_INET6, SOCK_STREAM, 0);
-    if(-1 == sockfd) {
+    if (-1 == sockfd) {
         LOG_SYS_FATAL("socket() failed");
     }
 
     // allow reusing of socket
     i32 res = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&LVAL(1L), sizeof(int));
-    if(-1 == res) {
+    if (-1 == res) {
         close(sockfd);
         LOG_SYS_FATAL("setsockopt() failed");
     }
@@ -89,15 +119,15 @@ int main() {
     server_addr.sin6_family         = AF_INET6;
     server_addr.sin6_addr           = in6addr_any;
     server_addr.sin6_port           = htons(PORT);
-    res = bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
-    if(-1 == res) {
+    res                             = bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    if (-1 == res) {
         close(sockfd);
         LOG_SYS_ERROR("bind() failed");
     }
 
     // listen for incoming connections on the socket
     res = listen(sockfd, 10);
-    if(-1 == res) {
+    if (-1 == res) {
         close(sockfd);
         LOG_SYS_FATAL("listen() failed ");
     }
@@ -107,17 +137,17 @@ int main() {
     StrReserve(&buf, UINT16_MAX - 1);
 
     HttpRequest req = HttpRequestInit();
-    while(true) {
+    while (true) {
         struct sockaddr_storage client_addr = {0};
         socklen_t               addrlen     = sizeof(client_addr);
-        int                     connfd = accept(sockfd, (struct sockaddr *)&client_addr, &addrlen);
-        if(-1 == connfd) {
+        int                     connfd      = accept(sockfd, (struct sockaddr *)&client_addr, &addrlen);
+        if (-1 == connfd) {
             close(sockfd);
             LOG_SYS_ERROR("listen() failed");
         }
 
         i64 recv_size = recv(connfd, buf.data, buf.capacity, 0);
-        if(-1 == recv_size) {
+        if (-1 == recv_size) {
             close(connfd);
             LOG_SYS_ERROR("recv() failed");
             continue;
@@ -126,7 +156,7 @@ int main() {
 
         LOG_INFO("REQUEST : \n{}", buf);
 
-        if(!HttpRequestParse(&req, buf.data)) {
+        if (!HttpRequestParse(&req, buf.data)) {
             LOG_ERROR("failed to parse http request");
             LOG_ERROR("request was : \n{}", buf);
             continue;
@@ -137,9 +167,11 @@ int main() {
         HttpRequestDeinit(&req);
 
         close(connfd);
+        break;
     }
 
     close(sockfd);
+    StrDeinit(&buf);
 
     return EXIT_SUCCESS;
 }

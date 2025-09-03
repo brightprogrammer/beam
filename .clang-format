@@ -72,7 +72,7 @@ BreakBeforeBraces: Attach
 BreakBeforeInlineASMColon: Always
 BreakBeforeTernaryOperators: false
 BreakStringLiterals: true
-ColumnLimit: 100
+ColumnLimit: 120
 ContinuationIndentWidth: 4
 IncludeBlocks: Regroup
 IndentCaseBlocks: false
@@ -85,7 +85,7 @@ IndentWrappedFunctionNames: true
 InsertBraces: false
 KeepEmptyLinesAtEOF: false
 KeepEmptyLinesAtTheStartOfBlocks: false
-LineEnding: CRLF
+LineEnding: LF
 Macros:
   - ALLOCATE(type, n) (type*)calloc(sizeof(type), n)
   - FREE(x) free((void*)x)
@@ -104,7 +104,7 @@ SpaceAroundPointerQualifiers: Default
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeCaseColon: true
 SpaceBeforeCpp11BracedList: true
-SpaceBeforeParens: false
+SpaceBeforeParens: ControlStatements
 SpaceBeforeParensOptions:
   AfterControlStatements: true
   AfterForeachMacros: true

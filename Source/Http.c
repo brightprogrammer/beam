@@ -11,7 +11,7 @@
 #include <Beam/Http.h>
 
 void HttpHeaderDeinit(HttpHeader *header) {
-    if(!header) {
+    if (!header) {
         LOG_FATAL("Invalid arguments");
     }
 
@@ -20,13 +20,13 @@ void HttpHeaderDeinit(HttpHeader *header) {
 }
 
 HttpHeader *HttpHeadersFind(HttpHeaders *headers, const char *key) {
-    if(!headers || !key) {
+    if (!headers || !key) {
         LOG_ERROR("Invalid arguments.");
         return NULL;
     }
 
     VecForeachPtr(headers, header, {
-        if(0 == ZstrCompare(header->key.data, key)) {
+        if (0 == ZstrCompare(header->key.data, key)) {
             return header;
         }
     });
@@ -35,27 +35,27 @@ HttpHeader *HttpHeadersFind(HttpHeaders *headers, const char *key) {
 }
 
 HttpRequestMethod http_request_method_from_str(Str *mstr) {
-    if(!mstr || !mstr->data) {
+    if (!mstr || !mstr->data) {
         LOG_FATAL("Invalid arguments");
     }
 
-    if(ZstrCompareN(mstr->data, "GET", 3)) {
+    if (ZstrCompareN(mstr->data, "GET", 3)) {
         return HTTP_REQUEST_METHOD_GET;
-    } else if(ZstrCompareN(mstr->data, "POST", 4)) {
+    } else if (ZstrCompareN(mstr->data, "POST", 4)) {
         return HTTP_REQUEST_METHOD_POST;
-    } else if(ZstrCompareN(mstr->data, "DELETE", 6)) {
+    } else if (ZstrCompareN(mstr->data, "DELETE", 6)) {
         return HTTP_REQUEST_METHOD_DELETE;
-    } else if(ZstrCompareN(mstr->data, "PUT", 3)) {
+    } else if (ZstrCompareN(mstr->data, "PUT", 3)) {
         return HTTP_REQUEST_METHOD_PUT;
-    } else if(ZstrCompareN(mstr->data, "PATCH", 5)) {
+    } else if (ZstrCompareN(mstr->data, "PATCH", 5)) {
         return HTTP_REQUEST_METHOD_PATCH;
-    } else if(ZstrCompareN(mstr->data, "HEAD", 4)) {
+    } else if (ZstrCompareN(mstr->data, "HEAD", 4)) {
         return HTTP_REQUEST_METHOD_HEAD;
-    } else if(ZstrCompareN(mstr->data, "OPTIONS", 7)) {
+    } else if (ZstrCompareN(mstr->data, "OPTIONS", 7)) {
         return HTTP_REQUEST_METHOD_OPTIONS;
-    } else if(ZstrCompareN(mstr->data, "CONNECT", 7)) {
+    } else if (ZstrCompareN(mstr->data, "CONNECT", 7)) {
         return HTTP_REQUEST_METHOD_CONNECT;
-    } else if(ZstrCompareN(mstr->data, "TRACE", 5)) {
+    } else if (ZstrCompareN(mstr->data, "TRACE", 5)) {
         return HTTP_REQUEST_METHOD_TRACE;
     }
 
@@ -63,25 +63,30 @@ HttpRequestMethod http_request_method_from_str(Str *mstr) {
 }
 
 const char *HttpRequestParse(HttpRequest *req, const char *in) {
-    if(!req || !in) {
+    if (!req || !in) {
         LOG_FATAL("Invalid arguments");
     }
 
     *req = HttpRequestInit();
 
-    const char* out = in;
+    const char *out = in;
 
     Str method = StrInit(), version = StrInit();
     StrReadFmt(in, "{} {} {}\r\n", method, req->url, version);
 
-    if(out == in) {
+    if (out == in) {
         LOG_ERROR("Http request parse failed. Not in valid format.");
+        StrDeinit(&method);
+        HttpRequestDeinit(req);
+        StrDeinit(&version);
         return in;
     }
 
     // make sure http version is good
-    if(0 != ZstrCompareN(version.data, "HTTP/1.1", 8)) {
+    if (0 != ZstrCompareN(version.data, "HTTP/1.1", 8)) {
         StrDeinit(&version);
+        HttpRequestDeinit(req);
+        StrDeinit(&method);
         LOG_ERROR("Invalid/Unsupported http verison.");
         return in;
     }
@@ -90,23 +95,24 @@ const char *HttpRequestParse(HttpRequest *req, const char *in) {
     // parse method and verify
     req->method = http_request_method_from_str(&method);
     StrDeinit(&method);
-    if(req->method == HTTP_REQUEST_METHOD_UNKNOWN) {
+    if (req->method == HTTP_REQUEST_METHOD_UNKNOWN) {
+        HttpRequestDeinit(req);
         LOG_ERROR("Invalid http request method.");
         return in;
     }
 
-    HttpHeader  hh  = HttpHeaderInit();
+    HttpHeader hh = HttpHeaderInit();
 
     // Init headers vector to take ownership of items
     req->headers = VecInitWithDeepCopyT(req->headers, NULL, HttpHeaderDeinit);
 
-    while(true) {
+    while (true) {
         // we stop parsing if we don't make any progress
         // i.e "out == in"
         out = in;
 
         // if we get CRLF at the beginning, then there are no headers
-        if(0 == ZstrCompareN(in, "\r\n", 2)) {
+        if (0 == ZstrCompareN(in, "\r\n", 2)) {
             out = in = in + 2;
             break;
         }
@@ -116,8 +122,9 @@ const char *HttpRequestParse(HttpRequest *req, const char *in) {
 
         // get header key
         StrReadFmt(in, "{}: {}\r\n", hh.key, hh.value);
-        if(out == in) {
+        if (out == in) {
             LOG_ERROR("Failed to find header key. Invalid http request.");
+            HttpHeaderDeinit(&hh);
             HttpRequestDeinit(req);
             return in;
         }
@@ -130,7 +137,7 @@ const char *HttpRequestParse(HttpRequest *req, const char *in) {
 
 
 void HttpRequestDeinit(HttpRequest *request) {
-    if(!request) {
+    if (!request) {
         LOG_FATAL("invalid arguments");
     }
 
@@ -141,7 +148,7 @@ void HttpRequestDeinit(HttpRequest *request) {
 
 
 const char *HttpResponseCodeToZstr(HttpResponseCode code) {
-    switch(code) {
+    switch (code) {
         case HTTP_RESPONSE_CODE_CONTINUE :
             return "100 Continue";
         case HTTP_RESPONSE_CODE_SWITCHING_PROTOCOLS :
@@ -273,7 +280,7 @@ const char *HttpResponseCodeToZstr(HttpResponseCode code) {
 
 
 const char *HttpContentTypeToZstr(HttpContentType type) {
-    switch(type) {
+    switch (type) {
         case HTTP_CONTENT_TYPE_TEXT_PLAIN :
             return "text/plain";
         case HTTP_CONTENT_TYPE_TEXT_HTML :
@@ -322,7 +329,7 @@ const char *HttpContentTypeToZstr(HttpContentType type) {
 }
 
 HttpResponse *HttpRespondWithHtml(HttpResponse *response, HttpResponseCode status, Str *html) {
-    if(!response || !html) {
+    if (!response || !html) {
         LOG_FATAL("invalid arguments.");
     }
 
@@ -339,19 +346,14 @@ HttpResponse *HttpRespondWithFile(
     HttpContentType  content_type,
     const char      *filepath
 ) {
-    if(!response || !filepath) {
+    if (!response || !filepath) {
         LOG_FATAL("invalid arguments.");
     }
 
     response->status_code  = status;
     response->content_type = content_type;
 
-    if(!ReadCompleteFile(
-           filepath,
-           &response->body.data,
-           &response->body.length,
-           &response->body.capacity
-       )) {
+    if (!ReadCompleteFile(filepath, &response->body.data, &response->body.length, &response->body.capacity)) {
         LOG_ERROR("failed to read html file contents.");
         return NULL;
     }
@@ -361,19 +363,19 @@ HttpResponse *HttpRespondWithFile(
 
 
 HttpResponse *HttpRespondTo(HttpResponse *response, int connfd) {
-    if(!response || !connfd) {
+    if (!response || !connfd) {
         LOG_ERROR("invalid arguments.");
         return NULL;
     }
 
     const char *response_code = HttpResponseCodeToZstr(response->status_code);
-    if(!response_code) {
+    if (!response_code) {
         LOG_ERROR("invalid/unknown response code");
         return NULL;
     }
 
     const char *content_type = HttpContentTypeToZstr(response->content_type);
-    if(!content_type) {
+    if (!content_type) {
         LOG_ERROR("invalid/unknown content type");
         return NULL;
     }
@@ -392,9 +394,7 @@ HttpResponse *HttpRespondTo(HttpResponse *response, int connfd) {
     );
 
     // http headers
-    VecForeachPtr(&response->headers, header, {
-        StrWriteFmt(&rstr, "{}: {}\r\n", header->key, header->value);
-    });
+    VecForeachPtr(&response->headers, header, { StrWriteFmt(&rstr, "{}: {}\r\n", header->key, header->value); });
 
     // response end, body start
     StrWriteFmt(&rstr, "\r\n");
@@ -413,7 +413,7 @@ HttpResponse *HttpRespondTo(HttpResponse *response, int connfd) {
 
 
 void HttpResponseDeinit(HttpResponse *response) {
-    if(!response) {
+    if (!response) {
         LOG_FATAL("invalid arguments");
     }
 

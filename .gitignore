@@ -12,3 +12,4 @@ Docs/public
 .venv
 .wraplock
 ThirdParty/.wraplock
+fuzz

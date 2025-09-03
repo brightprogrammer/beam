@@ -129,31 +129,31 @@ typedef enum {
     HTTP_CONTENT_TYPE_APPLICATION_MS_EXCEL,              // application/vnd.ms-excel
     HTTP_CONTENT_TYPE_APPLICATION_OPENXML_SPREADSHEET, // application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 
-    HTTP_CONTENT_TYPE_IMAGE_JPEG,            // image/jpeg
-    HTTP_CONTENT_TYPE_IMAGE_PNG,             // image/png
-    HTTP_CONTENT_TYPE_IMAGE_GIF,             // image/gif
-    HTTP_CONTENT_TYPE_IMAGE_BMP,             // image/bmp
-    HTTP_CONTENT_TYPE_IMAGE_WEBP,            // image/webp
-    HTTP_CONTENT_TYPE_IMAGE_SVG_XML,         // image/svg+xml
+    HTTP_CONTENT_TYPE_IMAGE_JPEG,                      // image/jpeg
+    HTTP_CONTENT_TYPE_IMAGE_PNG,                       // image/png
+    HTTP_CONTENT_TYPE_IMAGE_GIF,                       // image/gif
+    HTTP_CONTENT_TYPE_IMAGE_BMP,                       // image/bmp
+    HTTP_CONTENT_TYPE_IMAGE_WEBP,                      // image/webp
+    HTTP_CONTENT_TYPE_IMAGE_SVG_XML,                   // image/svg+xml
 
-    HTTP_CONTENT_TYPE_AUDIO_MPEG,            // audio/mpeg
-    HTTP_CONTENT_TYPE_AUDIO_OGG,             // audio/ogg
-    HTTP_CONTENT_TYPE_AUDIO_WAV,             // audio/wav
+    HTTP_CONTENT_TYPE_AUDIO_MPEG,                      // audio/mpeg
+    HTTP_CONTENT_TYPE_AUDIO_OGG,                       // audio/ogg
+    HTTP_CONTENT_TYPE_AUDIO_WAV,                       // audio/wav
 
-    HTTP_CONTENT_TYPE_VIDEO_MP4,             // video/mp4
-    HTTP_CONTENT_TYPE_VIDEO_OGG,             // video/ogg
-    HTTP_CONTENT_TYPE_VIDEO_WEBM,            // video/webm
+    HTTP_CONTENT_TYPE_VIDEO_MP4,                       // video/mp4
+    HTTP_CONTENT_TYPE_VIDEO_OGG,                       // video/ogg
+    HTTP_CONTENT_TYPE_VIDEO_WEBM,                      // video/webm
 
-    HTTP_CONTENT_TYPE_MULTIPART_FORM_DATA,   // multipart/form-data
-    HTTP_CONTENT_TYPE_MULTIPART_BYTERANGES,  // multipart/byteranges
+    HTTP_CONTENT_TYPE_MULTIPART_FORM_DATA,             // multipart/form-data
+    HTTP_CONTENT_TYPE_MULTIPART_BYTERANGES,            // multipart/byteranges
 
-    HTTP_CONTENT_TYPE_FONT_WOFF,             // font/woff
-    HTTP_CONTENT_TYPE_FONT_WOFF2,            // font/woff2
-    HTTP_CONTENT_TYPE_APPLICATION_FONT_WOFF, // application/font-woff (older syntax)
+    HTTP_CONTENT_TYPE_FONT_WOFF,                       // font/woff
+    HTTP_CONTENT_TYPE_FONT_WOFF2,                      // font/woff2
+    HTTP_CONTENT_TYPE_APPLICATION_FONT_WOFF,           // application/font-woff (older syntax)
 
-    HTTP_CONTENT_TYPE_APPLICATION_LD_JSON,   // application/ld+json
-    HTTP_CONTENT_TYPE_APPLICATION_GRAPHQL,   // application/graphql
-    HTTP_CONTENT_TYPE_TEXT_CSV               // text/csv
+    HTTP_CONTENT_TYPE_APPLICATION_LD_JSON,             // application/ld+json
+    HTTP_CONTENT_TYPE_APPLICATION_GRAPHQL,             // application/graphql
+    HTTP_CONTENT_TYPE_TEXT_CSV                         // text/csv
 } HttpContentType;
 
 ///
@@ -168,16 +168,16 @@ typedef struct {
 } HttpRequest;
 
 #ifdef __cplusplus
-#    define HttpRequestInit()                                                                      \
-        (HttpRequest {                                                                             \
-            .method  = HTTP_REQUEST_METHOD_UNKNOWN,                                                \
-            .url     = StrInit(),                                                                  \
-            .headers = VecInitWithDeepCopy(NULL, HttpHeaderDeinit)                                 \
+#    define HttpRequestInit()                                                                                          \
+        (HttpRequest {                                                                                                 \
+            .method  = HTTP_REQUEST_METHOD_UNKNOWN,                                                                    \
+            .url     = StrInit(),                                                                                      \
+            .headers = VecInitWithDeepCopy(NULL, HttpHeaderDeinit)                                                     \
         })
 #else
-#    define HttpRequestInit()                                                                      \
-        ((HttpRequest) {.method  = HTTP_REQUEST_METHOD_UNKNOWN,                                    \
-                        .url     = StrInit(),                                                      \
+#    define HttpRequestInit()                                                                                          \
+        ((HttpRequest) {.method  = HTTP_REQUEST_METHOD_UNKNOWN,                                                        \
+                        .url     = StrInit(),                                                                          \
                         .headers = VecInitWithDeepCopy(NULL, HttpHeaderDeinit)})
 #endif
 
@@ -189,18 +189,18 @@ typedef struct {
 } HttpResponse;
 
 #ifdef __cplusplus
-#    define HttpResponseInit()                                                                     \
-        (HttpResponse {                                                                            \
-            .content_type = HTTP_CONTENT_TYPE_INVALID,                                             \
-            .status_code  = HTTP_RESPONSE_CODE_INVALID,                                            \
-            .headers      = VecInitWithDeepCopy(NULL, HttpHeaderDeinit),                           \
-            .body         = StrInit()                                                              \
+#    define HttpResponseInit()                                                                                         \
+        (HttpResponse {                                                                                                \
+            .content_type = HTTP_CONTENT_TYPE_INVALID,                                                                 \
+            .status_code  = HTTP_RESPONSE_CODE_INVALID,                                                                \
+            .headers      = VecInitWithDeepCopy(NULL, HttpHeaderDeinit),                                               \
+            .body         = StrInit()                                                                                  \
         })
 #else
-#    define HttpResponseInit()                                                                     \
-        ((HttpResponse) {.content_type = HTTP_CONTENT_TYPE_INVALID,                                \
-                         .status_code  = HTTP_RESPONSE_CODE_INVALID,                               \
-                         .headers      = VecInitWithDeepCopy(NULL, HttpHeaderDeinit),              \
+#    define HttpResponseInit()                                                                                         \
+        ((HttpResponse) {.content_type = HTTP_CONTENT_TYPE_INVALID,                                                    \
+                         .status_code  = HTTP_RESPONSE_CODE_INVALID,                                                   \
+                         .headers      = VecInitWithDeepCopy(NULL, HttpHeaderDeinit),                                  \
                          .body         = StrInit()})
 #endif
 
