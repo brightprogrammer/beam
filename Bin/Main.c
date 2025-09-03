@@ -4,7 +4,6 @@
 
 #include <Misra.h>
 #include <Beam/Http.h>
-#include "Misra/Sys.h"
 
 #define PORT 3000
 
